@@ -1,6 +1,7 @@
 # Compiled class file
 *.class
 .idea
+/target/
 
 # Log file
 *.log
@@ -27,3 +28,4 @@ hs_err_pid*
 LICENSE
 *.md
 *.iml
+*.lst

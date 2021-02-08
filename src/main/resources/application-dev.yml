@@ -15,7 +15,7 @@ spring:
     enabled: true
     force: true
   datasource:
-    url: jdbc:mysql://localhost:3306/green_speed?serverTimezone=UTC&useUnicode=true&characterEncoding=utf8&useSSL=false
+    url: jdbc:mysql://localhost:3306/green_speed_local?serverTimezone=UTC&useUnicode=true&characterEncoding=utf8&useSSL=false
     username: root
     password: root123
     driverClassName: com.mysql.cj.jdbc.Driver
@@ -38,7 +38,7 @@ spring:
     properties.hibernate:
       dialect: org.hibernate.dialect.MySQL8Dialect
       hbm2ddl.auto: none
-    show-sql: false
+    show-sql: true
     open-in-view: true
   freemarker:
     suffix: .ftl #设定模板的后缀
