@@ -6,6 +6,7 @@ import com.google.common.collect.Maps;
 import com.mobplus.greenspeed.Constants;
 import com.mobplus.greenspeed.entity.*;
 import com.mobplus.greenspeed.module.gateway.convert.ServerConvert;
+import com.mobplus.greenspeed.module.gateway.form.ServerForm;
 import com.mobplus.greenspeed.module.gateway.vo.ServerProfileVO;
 import com.mobplus.greenspeed.module.gateway.vo.ServerVO;
 import com.mobplus.greenspeed.service.AppService;
@@ -23,9 +24,11 @@ import com.yeecloud.meeto.ipparser.IPInfo;
 import com.yeecloud.meeto.ipparser.service.IPParserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -131,10 +134,46 @@ public class ServerController {
         return null;
     }
 
+    @GetMapping("/list")
+    public Result getServerList() throws ServiceException {
+        Query query = new Query(Maps.newHashMap());
+        List<Server> list = serverService.query(query);
+        List<ServerVO> resultList = transform(list, "en");
+        return Result.SUCCESS(resultList);
+    }
+
+    @PostMapping("/create")
+    public Result create(@RequestBody @Valid ServerForm form, BindingResult bindingResult) throws ServiceException {
+        if (bindingResult.hasErrors()) {
+            String message = String.format("操作失败,详细信息:[%s]。", bindingResult.getFieldError().getDefaultMessage());
+            return Result.FAILURE(message);
+        }
+        serverService.create(form);
+        return Result.SUCCESS();
+    }
+
+    @PostMapping("/update/{id}")
+    public Result update(@PathVariable Integer id, @RequestBody @Valid ServerForm form, BindingResult bindingResult) throws ServiceException {
+        if (bindingResult.hasErrors()) {
+            String message = String.format("操作失败,详细信息:[%s]。", bindingResult.getFieldError().getDefaultMessage());
+            return Result.FAILURE(message);
+        }
+        serverService.update(id, form);
+        return Result.SUCCESS();
+    }
+
+//    @PostMapping("/delete")
+//    public Result delete (@RequestBody Integer[] ids) throws ServiceException {
+//        serverService.delete(ids);
+//        return Result.SUCCESS();
+//    }
+
     private List<ServerVO> transform(List<Server> list, String locale) {
         List<ServerVO> resultList = Lists.newArrayList();
         list.forEach(server -> {
             ServerVO vo = convert.convert(server);
+            log.info(vo.toString());
+            vo.setServerName(server.getName());
             if (isEnglish(locale)) {
                 vo.setName(server.getNameEn());
                 vo.setSummary(server.getSummaryEn());

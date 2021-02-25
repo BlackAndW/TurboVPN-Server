@@ -26,10 +26,10 @@ public abstract class AuditorEntity extends AuditTimeEntity {
     /** 创建人 */
     @CreatedBy
     @Column(name = "n_created_by", updatable = false)
-    protected Integer createdBy;
+    protected Integer createdBy = 0;
 
     /** 更新人 */
     @LastModifiedBy
     @Column(name = "n_modified_by")
-    protected Integer modifiedBy;
+    protected Integer modifiedBy = 0;
 }

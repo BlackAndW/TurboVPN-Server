@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2021-02-04T10:32:11+0800",
+    date = "2021-02-24T16:17:01+0800",
     comments = "version: 1.3.1.Final, compiler: javac, environment: Java 1.8.0_231 (Oracle Corporation)"
 )
 @Component
@@ -30,6 +30,11 @@ public class ServerConvertImpl implements ServerConvert {
         serverVO.setSummary( server.getSummary() );
         serverVO.setIconUrl( server.getIconUrl() );
         serverVO.setSpeed( server.getSpeed() );
+        serverVO.setRatio( server.getRatio() );
+        serverVO.setCountryCode( server.getCountryCode() );
+        serverVO.setRegion( server.getRegion() );
+        serverVO.setIpAddr( server.getIpAddr() );
+        serverVO.setStatus( server.getStatus() );
 
         return serverVO;
     }

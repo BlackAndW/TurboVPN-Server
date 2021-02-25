@@ -1,6 +1,6 @@
 #server.tomcat.uri-encoding=UTF-8
 server:
-  port: 9090
+  port: 9092
   tomcat.uri-encoding: UTF-8
   jsp:
     init-parameters:
