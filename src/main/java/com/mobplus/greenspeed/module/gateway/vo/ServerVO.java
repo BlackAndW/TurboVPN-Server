@@ -24,5 +24,20 @@ public class ServerVO {
     @JSONField(name = "b04")
     private String iconUrl;
     @JSONField(name = "b05")
-    private int speed;
+    private Integer speed;
+
+    private Integer ratio;
+
+    @JSONField(name = "serverName")
+    private String serverName;
+
+    @JSONField(name = "countryCode")
+    private String countryCode;
+
+    private String region;
+
+    @JSONField(name = "ipAddr")
+    private String ipAddr;
+
+    private Integer status;
 }
