@@ -8,7 +8,7 @@ server:
 
 spring:
   profiles:
-    active: dev
+    active: test
   servlet.multipart.max-file-size: 10MB
   http.encoding:
     charset: UTF-8
