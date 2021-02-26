@@ -103,7 +103,16 @@ public class ServerServiceImpl implements ServerService {
 
     @Override
     public Server findById(Integer id) throws ServiceException {
-        return null;
+        try{
+            Server server = serverRepository.findById(id).orElse(null);
+            if (null != server && !server.isDeleted()) {
+                return server;
+            } else {
+                return null;
+            }
+        } catch (Throwable e){
+            throw new ServiceException(e);
+        }
     }
 
     @Override

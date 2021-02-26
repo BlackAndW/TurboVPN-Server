@@ -101,8 +101,10 @@ public class ServerController {
         Member member = memberService.findMemberByToken(appId, token);
         Device device = deviceService.findDeviceByIMEIOrUUID(imei, devId);
         ServerAccount account = serverService.findServerAccountByServerId(serverId, appId, member != null ? member.getId() : 0, device != null ? device.getId() : 0);
+        Server server = serverService.findById(serverId);
         if (account != null) {
             ServerProfileVO profile = convert.convert(account);
+            profile.setIconUrl(server.getIconUrl());
             if (isEnglish(locale)) {
                 profile.setName(account.getServer().getNameEn());
             }
