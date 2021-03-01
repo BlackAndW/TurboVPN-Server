@@ -63,25 +63,26 @@ public class ServerServiceImpl implements ServerService {
 
     @Override
     public ServerAccount findServerAccountByServerId(Integer serverId, Integer appId, Integer memberId, Integer deviceId) throws ServiceException {
-        ServerAccount account = executeFindServerAccountByServerId(serverId, appId, memberId, deviceId);
-        if (account == null && serverId > 0) {
-            account = executeFindServerAccountByServerId(0, appId, memberId, deviceId);
-        }
-        return account;
+        return executeFindServerAccountByServerId(serverId, appId, memberId, deviceId);
     }
 
     private synchronized ServerAccount executeFindServerAccountByServerId(Integer serverId, Integer appId, Integer memberId, Integer deviceId) throws ServiceException {
+        QServer qServer = QServer.server;
+        Predicate predicateServer = ExpressionUtils.and(qServer.deleted.eq(Boolean.FALSE), qServer.status.eq(2));
+        predicateServer = ExpressionUtils.and(predicateServer, qServer.id.eq(serverId));
+
         QServerAccount qServerAccount = QServerAccount.serverAccount;
         Predicate predicate = ExpressionUtils.and(qServerAccount.deleted.eq(Boolean.FALSE), qServerAccount.status.eq(ServerAccount.State.OFFLINE));
         predicate = ExpressionUtils.and(predicate, qServerAccount.server.deleted.eq(Boolean.FALSE));
         predicate = ExpressionUtils.and(predicate, qServerAccount.server.status.eq(Server.State.RUNNING));
-        if (serverId > 0) {
-            predicate = ExpressionUtils.and(predicate, qServerAccount.server.id.eq(serverId));
-        }
 
         PageRequest pagRequest = PageRequest.of(0, 1);
-
+        Server server = serverRepository.findAll(predicateServer, pagRequest).getContent().get(0);
+        if (StringUtils.isEmpty(server.getCert())) {
+            server.setCert("-");
+        }
         Page<ServerAccount> list = accountRepository.findAll(predicate, pagRequest);
+        list.getContent().get(0).setServer(server);
         if (!list.getContent().isEmpty()) {
             ServerAccount account = list.getContent().get(0);
             account.setStatus(ServerAccount.State.PENDING);
