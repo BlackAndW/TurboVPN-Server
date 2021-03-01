@@ -27,6 +27,4 @@ public class ServerProfileVO {
     private String passwd;
     @JSONField(name = "b06")
     private String cert;
-    @JSONField(name = "icon_url")
-    private String iconUrl;
 }
