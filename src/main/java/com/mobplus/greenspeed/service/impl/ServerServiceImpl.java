@@ -69,7 +69,9 @@ public class ServerServiceImpl implements ServerService {
     private synchronized ServerAccount executeFindServerAccountByServerId(Integer serverId, Integer appId, Integer memberId, Integer deviceId) throws ServiceException {
         QServer qServer = QServer.server;
         Predicate predicateServer = ExpressionUtils.and(qServer.deleted.eq(Boolean.FALSE), qServer.status.eq(2));
-        predicateServer = ExpressionUtils.and(predicateServer, qServer.id.eq(serverId));
+        if (serverId != 0) {
+            predicateServer = ExpressionUtils.and(predicateServer, qServer.id.eq(serverId));
+        }
 
         QServerAccount qServerAccount = QServerAccount.serverAccount;
         Predicate predicate = ExpressionUtils.and(qServerAccount.deleted.eq(Boolean.FALSE), qServerAccount.status.eq(ServerAccount.State.OFFLINE));
