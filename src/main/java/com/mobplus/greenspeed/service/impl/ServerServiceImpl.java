@@ -84,10 +84,11 @@ public class ServerServiceImpl implements ServerService {
             server.setCert("-");
         }
         Page<ServerAccount> list = accountRepository.findAll(predicate, pagRequest);
-        list.getContent().get(0).setServer(server);
+        log.info(list.getContent().toString());
         if (!list.getContent().isEmpty()) {
+            list.getContent().get(0).setServer(server);
             ServerAccount account = list.getContent().get(0);
-            account.setStatus(ServerAccount.State.PENDING);
+//            account.setStatus(ServerAccount.State.PENDING);
             accountRepository.save(account);
 
             AccountLog log = new AccountLog();
