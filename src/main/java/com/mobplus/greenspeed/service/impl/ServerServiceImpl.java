@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Random;
 
 /**
  * Title
@@ -54,7 +55,7 @@ public class ServerServiceImpl implements ServerService {
         if (null != status && status != 0 && status > 0) {
             predicate = ExpressionUtils.and(predicate, qServer.status.eq(status));
         }
-        Sort sort = Sort.by(new Sort.Order(Sort.Direction.DESC, "ratio"));
+        Sort sort = Sort.by(new Sort.Order(Sort.Direction.ASC, "ratio"), new Sort.Order(Sort.Direction.ASC, "name"));
 
         List<Server> resultList = Lists.newArrayList();
         serverRepository.findAll(predicate, sort).forEach(resultList::add);
@@ -71,6 +72,8 @@ public class ServerServiceImpl implements ServerService {
         Predicate predicateServer = ExpressionUtils.and(qServer.deleted.eq(Boolean.FALSE), qServer.status.eq(2));
         if (serverId != 0) {
             predicateServer = ExpressionUtils.and(predicateServer, qServer.id.eq(serverId));
+        } else {
+            predicateServer = ExpressionUtils.and(predicateServer, qServer.nameEn.like("%United States%"));
         }
 
         QServerAccount qServerAccount = QServerAccount.serverAccount;
@@ -78,13 +81,23 @@ public class ServerServiceImpl implements ServerService {
         predicate = ExpressionUtils.and(predicate, qServerAccount.server.deleted.eq(Boolean.FALSE));
         predicate = ExpressionUtils.and(predicate, qServerAccount.server.status.eq(Server.State.RUNNING));
 
-        PageRequest pagRequest = PageRequest.of(0, 1);
-        Server server = serverRepository.findAll(predicateServer, pagRequest).getContent().get(0);
-        if (StringUtils.isEmpty(server.getCert())) {
-            server.setCert("-");
+
+        Sort sort = Sort.by(new Sort.Order(Sort.Direction.ASC, "ratio"), new Sort.Order(Sort.Direction.ASC, "name"));
+        PageRequest pagRequestServer = PageRequest.of(0, 10, sort);
+        Page<Server> serverList = serverRepository.findAll(predicateServer, pagRequestServer);
+
+        Server server = new Server();
+        if (serverList.getContent().size() > 0) {
+            int serverIndex = new Random().nextInt(serverList.getContent().size());
+            server = serverList.getContent().get(serverIndex);
+            if (StringUtils.isEmpty(server.getCert())) {
+                server.setCert("-");
+            }
         }
+
+        PageRequest pagRequest = PageRequest.of(0, 1);
         Page<ServerAccount> list = accountRepository.findAll(predicate, pagRequest);
-        log.info(list.getContent().toString());
+//        log.info(list.getContent().toString());
         if (!list.getContent().isEmpty()) {
             list.getContent().get(0).setServer(server);
             ServerAccount account = list.getContent().get(0);
