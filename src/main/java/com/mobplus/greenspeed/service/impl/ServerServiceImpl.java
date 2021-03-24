@@ -81,7 +81,6 @@ public class ServerServiceImpl implements ServerService {
         predicate = ExpressionUtils.and(predicate, qServerAccount.server.deleted.eq(Boolean.FALSE));
         predicate = ExpressionUtils.and(predicate, qServerAccount.server.status.eq(Server.State.RUNNING));
 
-
         Sort sort = Sort.by(new Sort.Order(Sort.Direction.ASC, "ratio"), new Sort.Order(Sort.Direction.ASC, "name"));
         PageRequest pagRequestServer = PageRequest.of(0, 10, sort);
         Page<Server> serverList = serverRepository.findAll(predicateServer, pagRequestServer);
@@ -95,7 +94,8 @@ public class ServerServiceImpl implements ServerService {
             }
         }
 
-        PageRequest pagRequest = PageRequest.of(0, 1);
+        int randomPageNum = new Random().nextInt(1000);
+        PageRequest pagRequest = PageRequest.of(randomPageNum, 1);
         Page<ServerAccount> list = accountRepository.findAll(predicate, pagRequest);
 //        log.info(list.getContent().toString());
         if (!list.getContent().isEmpty()) {
