@@ -2,6 +2,7 @@ package com.mobplus.greenspeed.module.gateway.controller;
 
 import com.mobplus.greenspeed.entity.UserAdInfo;
 import com.mobplus.greenspeed.module.gateway.convert.UserAdInfoConvert;
+import com.mobplus.greenspeed.module.gateway.form.DeviceForm;
 import com.mobplus.greenspeed.module.gateway.form.UserAdInfoForm;
 import com.mobplus.greenspeed.service.UserAdInfoService;
 import com.yeecloud.meeto.common.exception.ServiceException;
@@ -27,9 +28,6 @@ import javax.servlet.http.HttpServletRequest;
 @RequestMapping("/app/api/v1/user")
 public class UserAdInfoController {
 
-//    @Autowired
-//    UserAdInfoConvert userAdInfoConvert;
-
     @Autowired
     UserAdInfoService userAdInfoService;
 
@@ -37,12 +35,12 @@ public class UserAdInfoController {
     HttpServletRequest request;
 
     @PostMapping("/count")
-    public Result setCounting(@RequestBody UserAdInfoForm form) throws ServiceException {
+    public Result setCounting(@RequestBody UserAdInfoForm userForm) throws ServiceException {
         String ipAddress = ParamUtils.getIpAddr(request);
         if (StringUtils.isEmpty(ipAddress)) {
             return Result.FAILURE("ipAddress is empty!");
         }
-        userAdInfoService.createOrUpdateInfo(form, ipAddress);
+        userAdInfoService.createOrUpdateInfo(userForm, ipAddress);
         return Result.SUCCESS();
     }
 
