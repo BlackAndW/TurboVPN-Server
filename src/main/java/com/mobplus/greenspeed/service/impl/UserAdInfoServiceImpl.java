@@ -5,7 +5,6 @@ import com.mobplus.greenspeed.entity.UserAdInfo;
 import com.mobplus.greenspeed.module.gateway.form.UserAdInfoForm;
 import com.mobplus.greenspeed.repository.UserAdInfoRepository;
 import com.mobplus.greenspeed.service.UserAdInfoService;
-import com.yeecloud.meeto.common.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
@@ -25,17 +24,33 @@ public class UserAdInfoServiceImpl implements UserAdInfoService {
 
     @Async
     @Override
-    public synchronized void createOrUpdateInfo(UserAdInfoForm form, String userIp) throws ServiceException {
+    public synchronized void createOrUpdateInfo(UserAdInfoForm userForm, String userIp) {
         try {
-            UserAdInfo userAdInfo = userAdInfoRepository.findFirstByUserIp(userIp);
-            if (userAdInfo == null) {
-                userAdInfo = new UserAdInfo();
-            }
-            NewBeanUtils.copyProperties(userAdInfo, form, true);
-            userAdInfo.setUserIp(userIp);
+            UserAdInfo userAdInfo = userAdInfoRepository.findFirstByUuidOrderByCreatedAtDesc(userForm.getUuid());
+
+            //判断是否需要新增一条记录
+            userAdInfo = setCountValue(isNewRecord(userAdInfo, userForm), userForm, userIp);
+
             userAdInfoRepository.save(userAdInfo);
         } catch (Throwable e) {
             log.error(e.getMessage(), e);
         }
+    }
+
+    private UserAdInfo isNewRecord(UserAdInfo userAdInfo, UserAdInfoForm form) {
+        if (null == userAdInfo || !form.getUuid().equals(userAdInfo.getUuid()))
+            return new UserAdInfo();
+
+        //超过一天的记录新增
+        if (System.currentTimeMillis() - userAdInfo.getCreatedAt() > 1000*60*60*24)
+            return new UserAdInfo();
+
+        return userAdInfo;
+    }
+
+    private UserAdInfo setCountValue(UserAdInfo userAdInfo, UserAdInfoForm userForm, String userIp) {
+        NewBeanUtils.copyProperties(userAdInfo, userForm);
+        userAdInfo.setUserIp(userIp);
+        return userAdInfo;
     }
 }
