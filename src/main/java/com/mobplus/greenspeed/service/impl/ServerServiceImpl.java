@@ -78,8 +78,6 @@ public class ServerServiceImpl implements ServerService {
 
         QServerAccount qServerAccount = QServerAccount.serverAccount;
         Predicate predicate = ExpressionUtils.and(qServerAccount.deleted.eq(Boolean.FALSE), qServerAccount.status.eq(ServerAccount.State.OFFLINE));
-        predicate = ExpressionUtils.and(predicate, qServerAccount.server.deleted.eq(Boolean.FALSE));
-        predicate = ExpressionUtils.and(predicate, qServerAccount.server.status.eq(Server.State.RUNNING));
 
         Sort sort = Sort.by(new Sort.Order(Sort.Direction.ASC, "ratio"), new Sort.Order(Sort.Direction.ASC, "name"));
         PageRequest pagRequestServer = PageRequest.of(0, 10, sort);
@@ -102,7 +100,7 @@ public class ServerServiceImpl implements ServerService {
             list.getContent().get(0).setServer(server);
             ServerAccount account = list.getContent().get(0);
 //            account.setStatus(ServerAccount.State.PENDING);
-            accountRepository.save(account);
+//            accountRepository.save(account);
 
             AccountLog log = new AccountLog();
             log.setServerId(account.getServer().getId());
