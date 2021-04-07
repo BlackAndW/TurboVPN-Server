@@ -66,14 +66,34 @@ public class ServerController {
 
     @PostMapping("/c0001")
     public Result getServerList(@RequestHeader(Constants.H_PACKGE_NAME) String pkgName,
-                                @RequestHeader(Constants.H_LOCALE) String locale,
-                                @RequestHeader(Constants.H_TOKEN) String token) throws ServiceException {
+                                @RequestHeader(Constants.H_LOCALE) String locale) throws ServiceException {
+
+        return getResultList(pkgName, locale, Server.Type.NORMAL);
+    }
+
+    @PostMapping("/vip")
+    public Result getVipServerList(@RequestHeader(Constants.H_PACKGE_NAME) String pkgName,
+                                @RequestHeader(Constants.H_LOCALE) String locale) throws ServiceException {
+
+        return getResultList(pkgName, locale, Server.Type.VIP);
+    }
+
+    /**
+     *
+     * @param pkgName   应用包名
+     * @param locale    地域检测
+     * @param type      节点类型
+     * @return
+     * @throws ServiceException
+     */
+    private Result getResultList(String pkgName, String locale, Integer type) throws ServiceException{
         Integer appId = getAppId(pkgName);
         if (appId == null) {
             return Result.FAILURE(ResultCode.PARAM_ERROR);
         }
         Query query = new Query(Maps.newHashMap());
         query.put("status", Server.State.RUNNING);
+        query.put("type", type);
         List<Server> list = serverService.query(query);
         List<ServerVO> resultList = transform(list, locale);
         return Result.SUCCESS(resultList);
@@ -162,12 +182,6 @@ public class ServerController {
         return Result.SUCCESS();
     }
 
-//    @PostMapping("/delete")
-//    public Result delete (@RequestBody Integer[] ids) throws ServiceException {
-//        serverService.delete(ids);
-//        return Result.SUCCESS();
-//    }
-
     private List<ServerVO> transform(List<Server> list, String locale) {
         List<ServerVO> resultList = Lists.newArrayList();
         list.forEach(server -> {
@@ -221,8 +235,8 @@ public class ServerController {
 
     private String getLimitError(boolean english) {
         if (english) {
-            return configureService.getValueByKey("limit.hint.en", "Sorry! because the policy, we cannot provide servces for your region!");
+            return configureService.getValueByKey("limit.hint.en", "Sorry! because the policy, we cannot provide services for your region!");
         }
-        return configureService.getValueByKey("limit.hint.cn", "非常抱嵌,因為政策原因,你所在的地區無法提供服務!");
+        return configureService.getValueByKey("limit.hint.cn", "非常抱歉,因為政策原因,你所在的地區無法提供服務!");
     }
 }

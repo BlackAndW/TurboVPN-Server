@@ -40,4 +40,7 @@ public class ServerVO {
     private String ipAddr;
 
     private Integer status;
+
+    private Integer type;
+
 }
