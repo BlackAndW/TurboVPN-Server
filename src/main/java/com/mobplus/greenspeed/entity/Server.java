@@ -24,6 +24,11 @@ public class Server extends AuditorEntity {
         int RUNNING = 2;
     }
 
+    public static interface Type {
+        int NORMAL = 0;
+        int VIP = 1;
+    }
+
     @Id
     @Column(name = "n_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -54,6 +59,8 @@ public class Server extends AuditorEntity {
     private String protocol;
     @Column(name = "c_cert")
     private String cert;
+    @Column(name = "n_type")
+    private Integer type;
     @Column(name = "n_status")
     private int status;
     @Column(name = "c_remark")

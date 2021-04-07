@@ -2,6 +2,7 @@ package com.mobplus.greenspeed.service.impl;
 
 import com.apache.commons.beanutils.NewBeanUtils;
 import com.google.common.collect.Lists;
+import com.mobplus.greenspeed.configuration.CacheConfiguration;
 import com.mobplus.greenspeed.entity.*;
 import com.mobplus.greenspeed.module.gateway.form.ServerForm;
 import com.mobplus.greenspeed.repository.AccountLogRepository;
@@ -15,9 +16,12 @@ import com.yeecloud.meeto.common.util.Query;
 import com.yeecloud.meeto.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +42,8 @@ import java.util.Random;
 public class ServerServiceImpl implements ServerService {
 
     @Autowired
+    private CacheConfiguration cacheConfiguration;
+    @Autowired
     private ServerRepository serverRepository;
     @Autowired
     private ServerAccountRepository accountRepository;
@@ -48,18 +54,25 @@ public class ServerServiceImpl implements ServerService {
 
     @Override
     public List<Server> query(Query query) throws ServiceException {
-        QServer qServer = QServer.server;
+        try {
+            QServer qServer = QServer.server;
 
-        Integer status = query.get("status", Integer.class);
-        Predicate predicate = qServer.deleted.eq(Boolean.FALSE);
-        if (null != status && status != 0 && status > 0) {
-            predicate = ExpressionUtils.and(predicate, qServer.status.eq(status));
+            Integer status = query.get("status", Integer.class);
+            Integer type = query.get("type", Integer.class);
+            Predicate predicate = qServer.deleted.eq(Boolean.FALSE);
+            if (null != status && status != 0 && status > 0) {
+                predicate = ExpressionUtils.and(predicate, qServer.status.eq(status));
+                predicate = ExpressionUtils.and(predicate, qServer.type.eq(type));
+            }
+            Sort sort = Sort.by(new Sort.Order(Sort.Direction.ASC, "ratio"), new Sort.Order(Sort.Direction.ASC, "name"));
+
+            List<Server> resultList = Lists.newArrayList();
+            serverRepository.findAll(predicate, sort).forEach(resultList::add);
+            return resultList;
+        } catch (Throwable throwable) {
+            log.error(throwable.getMessage());
+            return null;
         }
-        Sort sort = Sort.by(new Sort.Order(Sort.Direction.ASC, "ratio"), new Sort.Order(Sort.Direction.ASC, "name"));
-
-        List<Server> resultList = Lists.newArrayList();
-        serverRepository.findAll(predicate, sort).forEach(resultList::add);
-        return resultList;
     }
 
     @Override
@@ -73,6 +86,7 @@ public class ServerServiceImpl implements ServerService {
         if (serverId != 0) {
             predicateServer = ExpressionUtils.and(predicateServer, qServer.id.eq(serverId));
         } else {
+            predicateServer = ExpressionUtils.and(predicateServer, qServer.type.eq(0));
             predicateServer = ExpressionUtils.and(predicateServer, qServer.nameEn.like("%United States%"));
         }
 
@@ -95,7 +109,7 @@ public class ServerServiceImpl implements ServerService {
         int randomPageNum = new Random().nextInt(1000);
         PageRequest pagRequest = PageRequest.of(randomPageNum, 1);
         Page<ServerAccount> list = accountRepository.findAll(predicate, pagRequest);
-//        log.info(list.getContent().toString());
+
         if (!list.getContent().isEmpty()) {
             list.getContent().get(0).setServer(server);
             ServerAccount account = list.getContent().get(0);

@@ -49,4 +49,7 @@ public class ServerForm {
     @NotNull(message = "请选择节点状态")
     private Integer status;
 
+    @NotNull(message = "请选择节点类型")
+    private Integer type;
+
 }
