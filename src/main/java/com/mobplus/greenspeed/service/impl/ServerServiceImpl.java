@@ -2,7 +2,6 @@ package com.mobplus.greenspeed.service.impl;
 
 import com.apache.commons.beanutils.NewBeanUtils;
 import com.google.common.collect.Lists;
-import com.mobplus.greenspeed.configuration.CacheConfiguration;
 import com.mobplus.greenspeed.entity.*;
 import com.mobplus.greenspeed.module.gateway.form.ServerForm;
 import com.mobplus.greenspeed.repository.AccountLogRepository;
@@ -21,7 +20,6 @@ import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,7 +40,7 @@ import java.util.Random;
 public class ServerServiceImpl implements ServerService {
 
     @Autowired
-    private CacheConfiguration cacheConfiguration;
+    private CacheManager cacheManager;
     @Autowired
     private ServerRepository serverRepository;
     @Autowired
@@ -55,19 +53,29 @@ public class ServerServiceImpl implements ServerService {
     @Override
     public List<Server> query(Query query) throws ServiceException {
         try {
-            QServer qServer = QServer.server;
+            Cache normalServerCache = cacheManager.getCache("normalCache");
+            Cache vipServerCache = cacheManager.getCache("normalCache");
 
             Integer status = query.get("status", Integer.class);
             Integer type = query.get("type", Integer.class);
-            Predicate predicate = qServer.deleted.eq(Boolean.FALSE);
-            if (null != status && status != 0 && status > 0) {
-                predicate = ExpressionUtils.and(predicate, qServer.status.eq(status));
-                predicate = ExpressionUtils.and(predicate, qServer.type.eq(type));
-            }
-            Sort sort = Sort.by(new Sort.Order(Sort.Direction.ASC, "ratio"), new Sort.Order(Sort.Direction.ASC, "name"));
+            List<Server> resultList = getServerCache(normalServerCache, vipServerCache, type);
 
-            List<Server> resultList = Lists.newArrayList();
-            serverRepository.findAll(predicate, sort).forEach(resultList::add);
+            if (resultList .size() < 1) {
+                QServer qServer = QServer.server;
+                Predicate predicate = qServer.deleted.eq(Boolean.FALSE);
+                if (null != status  && status != 0 && status > 0) {
+                    predicate = ExpressionUtils.and(predicate, qServer.status.eq(status));
+                    predicate = ExpressionUtils.and(predicate, qServer.type.eq(type));
+                }
+                Sort sort = Sort.by(new Sort.Order(Sort.Direction.ASC, "ratio"), new Sort.Order(Sort.Direction.ASC, "name"));
+
+                serverRepository.findAll(predicate, sort).forEach(resultList::add);
+                if (type == 0){
+                    normalServerCache.put("normalServerList", resultList);
+                } else if (type == 1){
+                    vipServerCache.put("vipServerList", resultList);
+                }
+            }
             return resultList;
         } catch (Throwable throwable) {
             log.error(throwable.getMessage());
@@ -90,9 +98,6 @@ public class ServerServiceImpl implements ServerService {
             predicateServer = ExpressionUtils.and(predicateServer, qServer.nameEn.like("%United States%"));
         }
 
-        QServerAccount qServerAccount = QServerAccount.serverAccount;
-        Predicate predicate = ExpressionUtils.and(qServerAccount.deleted.eq(Boolean.FALSE), qServerAccount.status.eq(ServerAccount.State.OFFLINE));
-
         Sort sort = Sort.by(new Sort.Order(Sort.Direction.ASC, "ratio"), new Sort.Order(Sort.Direction.ASC, "name"));
         PageRequest pagRequestServer = PageRequest.of(0, 10, sort);
         Page<Server> serverList = serverRepository.findAll(predicateServer, pagRequestServer);
@@ -106,15 +111,25 @@ public class ServerServiceImpl implements ServerService {
             }
         }
 
-        int randomPageNum = new Random().nextInt(1000);
-        PageRequest pagRequest = PageRequest.of(randomPageNum, 1);
-        Page<ServerAccount> list = accountRepository.findAll(predicate, pagRequest);
+        Cache accountCache = cacheManager.getCache("redisCache");
+        List<ServerAccount> list = Lists.newArrayList();
+        if (accountCache != null && accountCache.get("accountCache") != null) {
+            list = (List<ServerAccount>)accountCache.get("accountCache").get();
+        } else {
+            QServerAccount qServerAccount = QServerAccount.serverAccount;
+            Predicate predicate = ExpressionUtils.and(qServerAccount.deleted.eq(Boolean.FALSE), qServerAccount.status.eq(ServerAccount.State.OFFLINE));
 
-        if (!list.getContent().isEmpty()) {
-            list.getContent().get(0).setServer(server);
-            ServerAccount account = list.getContent().get(0);
-//            account.setStatus(ServerAccount.State.PENDING);
-//            accountRepository.save(account);
+            PageRequest pagRequest = PageRequest.of(0, 1000);
+            accountRepository.findAll(predicate, pagRequest).forEach(list::add);
+            accountCache.put("accountCache", list);
+        }
+
+        if (list != null && !list.isEmpty()) {
+            int randomNum = new Random().nextInt(list.size());
+            list.get(randomNum).setServer(server);
+            ServerAccount account = list.get(randomNum);
+            //            account.setStatus(ServerAccount.State.PENDING);
+            //            accountRepository.save(account);
 
             AccountLog log = new AccountLog();
             log.setServerId(account.getServer().getId());
@@ -138,6 +153,7 @@ public class ServerServiceImpl implements ServerService {
     @Override
     @Transactional(rollbackFor = Throwable.class)
     public void create(ServerForm form) throws ServiceException {
+        clearCache();
         Server server = new Server();
         NewBeanUtils.copyProperties(server, form, true);
         server.setIconUrl(IconBaseUrl + form.getCountryCode().toLowerCase() + ".png");
@@ -152,6 +168,7 @@ public class ServerServiceImpl implements ServerService {
     @Transactional(rollbackFor = Throwable.class)
     public void update(Integer id, ServerForm form) throws ServiceException {
         try {
+            clearCache();
             Server server = serverRepository.findById(id).orElse(null);
             if (null != server && !server.isDeleted()) {
                 NewBeanUtils.copyProperties(server, form, true);
@@ -163,9 +180,23 @@ public class ServerServiceImpl implements ServerService {
         }
     }
 
-//    @Override
-//    @Transactional(rollbackFor = Throwable.class)
-//    public void delete(Integer[] ids) throws ServiceException {
-//        serverRepository.deleteById(ids);
-//    }
+    private List<Server> getServerCache(Cache normalServerCache, Cache vipServerCache, Integer type){
+        if (type == Server.Type.NORMAL) {
+            if (normalServerCache != null && normalServerCache.get("normalServerList") != null) {
+                return (List<Server>) normalServerCache.get("normalServerList").get();
+            }
+        } else if (type == Server.Type.VIP) {
+            if (vipServerCache != null && vipServerCache.get("vipServerList") != null) {
+                return (List<Server>) vipServerCache.get("vipServerList").get();
+            }
+        }
+        log.info("refresh cache!");
+        return Lists.newArrayList();
+    }
+
+    private void clearCache(){
+        Cache normalCache = cacheManager.getCache("normalCache");
+        normalCache.clear();
+        log.info("clear cache!");
+    }
 }
