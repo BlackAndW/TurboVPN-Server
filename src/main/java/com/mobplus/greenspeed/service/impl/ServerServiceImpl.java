@@ -65,6 +65,8 @@ public class ServerServiceImpl implements ServerService {
                 Predicate predicate = qServer.deleted.eq(Boolean.FALSE);
                 if (null != status  && status != 0 && status > 0) {
                     predicate = ExpressionUtils.and(predicate, qServer.status.eq(status));
+                }
+                if (type != Server.Type.ALL) {
                     predicate = ExpressionUtils.and(predicate, qServer.type.eq(type));
                 }
                 Sort sort = Sort.by(new Sort.Order(Sort.Direction.ASC, "ratio"), new Sort.Order(Sort.Direction.ASC, "name"));
