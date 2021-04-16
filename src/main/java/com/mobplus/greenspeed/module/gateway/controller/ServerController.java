@@ -155,8 +155,9 @@ public class ServerController {
     }
 
     @GetMapping("/list")
-    public Result getServerList() throws ServiceException {
+    public Result getServerList(Integer type) throws ServiceException {
         Query query = new Query(Maps.newHashMap());
+        query.put("type", Server.Type.ALL);
         List<Server> list = serverService.query(query);
         List<ServerVO> resultList = transform(list, "en");
         return Result.SUCCESS(resultList);

@@ -27,6 +27,7 @@ public class Server extends AuditorEntity {
     public static interface Type {
         int NORMAL = 0;
         int VIP = 1;
+        int ALL = 2;
     }
 
     @Id
