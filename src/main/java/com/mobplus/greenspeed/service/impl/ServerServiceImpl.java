@@ -20,6 +20,7 @@ import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,10 +56,11 @@ public class ServerServiceImpl implements ServerService {
         try {
             Cache normalServerCache = cacheManager.getCache("normalCache");
             Cache vipServerCache = cacheManager.getCache("normalCache");
+            Cache poolServerCache = cacheManager.getCache("normalCache");
 
             Integer status = query.get("status", Integer.class);
             Integer type = query.get("type", Integer.class);
-            List<Server> resultList = getServerCache(normalServerCache, vipServerCache, type);
+            List<Server> resultList = getServerCache(normalServerCache, vipServerCache, poolServerCache, type);
 
             if (resultList .size() < 1) {
                 QServer qServer = QServer.server;
@@ -76,12 +78,29 @@ public class ServerServiceImpl implements ServerService {
                     normalServerCache.put("normalServerList", resultList);
                 } else if (type == 1){
                     vipServerCache.put("vipServerList", resultList);
+                } else if (type == 2){
+                    poolServerCache.put("poolServerList", resultList);
                 }
             }
             return resultList;
         } catch (Throwable throwable) {
             log.error(throwable.getMessage());
             return null;
+        }
+    }
+
+    @Async
+    @Override
+    public synchronized void updateOnlineConn(String ipAddr, Integer onlineConn) throws ServiceException {
+        QServer qServer = QServer.server;
+        Predicate predicate = ExpressionUtils.and(qServer.deleted.eq(Boolean.FALSE), qServer.status.eq(2));
+        predicate = ExpressionUtils.and(predicate, qServer.ipAddr.eq(ipAddr));
+        Server server = serverRepository.findOne(predicate).orElse(null);
+        if (null != server && !server.isDeleted()) {
+            server.setOnlineConn(onlineConn);
+            serverRepository.save(server);
+        } else {
+            log.info("update fail! [{}] is not exist in server list!", ipAddr);
         }
     }
 
@@ -96,7 +115,8 @@ public class ServerServiceImpl implements ServerService {
         if (serverId != 0) {
             predicateServer = ExpressionUtils.and(predicateServer, qServer.id.eq(serverId));
         } else {
-            predicateServer = ExpressionUtils.and(predicateServer, qServer.type.eq(0));
+            // 老版本若参数是0，会随机取一个美国服务器
+            predicateServer = ExpressionUtils.and(predicateServer, qServer.type.eq(Server.Type.NORMAL));
             predicateServer = ExpressionUtils.and(predicateServer, qServer.nameEn.like("%United States%"));
         }
 
@@ -108,6 +128,9 @@ public class ServerServiceImpl implements ServerService {
         if (serverList.getContent().size() > 0) {
             int serverIndex = new Random().nextInt(serverList.getContent().size());
             server = serverList.getContent().get(serverIndex);
+            if (server.getOnlineConn() > server.getMaxConn()) {
+                server = changeServer(server);
+            }
             if (StringUtils.isEmpty(server.getCert())) {
                 server.setCert("-");
             }
@@ -182,7 +205,7 @@ public class ServerServiceImpl implements ServerService {
         }
     }
 
-    private List<Server> getServerCache(Cache normalServerCache, Cache vipServerCache, Integer type){
+    private List<Server> getServerCache(Cache normalServerCache, Cache vipServerCache, Cache poolServerCache, Integer type){
         if (type == Server.Type.NORMAL) {
             if (normalServerCache != null && normalServerCache.get("normalServerList") != null) {
                 return (List<Server>) normalServerCache.get("normalServerList").get();
@@ -190,6 +213,10 @@ public class ServerServiceImpl implements ServerService {
         } else if (type == Server.Type.VIP) {
             if (vipServerCache != null && vipServerCache.get("vipServerList") != null) {
                 return (List<Server>) vipServerCache.get("vipServerList").get();
+            }
+        }else if (type == Server.Type.POOL) {
+            if (poolServerCache != null && poolServerCache.get("poolServerList") != null) {
+                return (List<Server>) poolServerCache.get("poolServerList").get();
             }
         }
         log.info("refresh cache!");
@@ -200,5 +227,24 @@ public class ServerServiceImpl implements ServerService {
         Cache normalCache = cacheManager.getCache("normalCache");
         normalCache.clear();
         log.info("clear cache!");
+    }
+
+    private Server changeServer(Server server){
+        QServer qServer = QServer.server;
+        Predicate predicateServer = ExpressionUtils.and(qServer.deleted.eq(Boolean.FALSE), qServer.status.eq(2));
+        predicateServer = ExpressionUtils.and(predicateServer, qServer.type.eq(Server.Type.POOL));
+        predicateServer = ExpressionUtils.and(predicateServer, qServer.countryCode.eq(server.getCountryCode()));
+        predicateServer = ExpressionUtils.and(predicateServer, qServer.onlineConn.lt(qServer.maxConn));
+
+        Sort sort = Sort.by(new Sort.Order(Sort.Direction.ASC, "ratio"), new Sort.Order(Sort.Direction.ASC, "name"));
+        PageRequest pagRequestServer = PageRequest.of(0, 50, sort);
+        Page<Server> serverPoolList = serverRepository.findAll(predicateServer, pagRequestServer);
+        // 从满足条件的节点随机取一个，没有则返回原来的节点
+        if (serverPoolList.getContent().size() > 0) {
+            int serverIndex = new Random().nextInt(serverPoolList.getContent().size());
+            server = serverPoolList.getContent().get(serverIndex);
+            log.info("change to another server: " + server);
+        }
+        return server;
     }
 }

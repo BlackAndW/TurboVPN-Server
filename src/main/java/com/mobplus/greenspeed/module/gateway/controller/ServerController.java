@@ -155,9 +155,9 @@ public class ServerController {
     }
 
     @GetMapping("/list")
-    public Result getServerList(Integer type) throws ServiceException {
+    public Result getServerList(@RequestParam Integer type) throws ServiceException {
         Query query = new Query(Maps.newHashMap());
-        query.put("type", Server.Type.ALL);
+        query.put("type", type);
         List<Server> list = serverService.query(query);
         List<ServerVO> resultList = transform(list, "en");
         return Result.SUCCESS(resultList);
@@ -183,11 +183,16 @@ public class ServerController {
         return Result.SUCCESS();
     }
 
+    @PostMapping("/update/online")
+    public void updateOnlineConn(@RequestParam(value = "ip_addr") String ipAddr, @RequestParam(value = "online_conn") Integer onlineConn) throws ServiceException {
+        serverService.updateOnlineConn(ipAddr, onlineConn);
+    }
+
     private List<ServerVO> transform(List<Server> list, String locale) {
         List<ServerVO> resultList = Lists.newArrayList();
         list.forEach(server -> {
             ServerVO vo = convert.convert(server);
-            log.info(vo.toString());
+            // log.info(vo.toString());
             vo.setServerName(server.getName());
             if (isEnglish(locale)) {
                 vo.setName(server.getNameEn());

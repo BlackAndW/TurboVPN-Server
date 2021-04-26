@@ -27,6 +27,8 @@ public interface ServerService {
 
     void update(Integer id, ServerForm form) throws ServiceException;
 
+    void updateOnlineConn(String ipAddr, Integer onlineConn) throws ServiceException;
+
 //    void delete(Integer[] ids) throws ServiceException;
 
     ServerAccount findServerAccountByServerId(Integer serverId, Integer appId, Integer memberId, Integer devId) throws ServiceException;
