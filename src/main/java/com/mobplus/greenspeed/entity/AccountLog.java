@@ -1,5 +1,6 @@
 package com.mobplus.greenspeed.entity;
 
+import com.alibaba.fastjson.annotation.JSONField;
 import lombok.Data;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
@@ -33,14 +34,27 @@ public class AccountLog implements Serializable {
 
     @Column(name = "n_server_id")
     private Integer serverId;
+    @Column(name = "n_server_name")
+    private String serverName;
     @Column(name = "n_account_id")
     private Integer accountId;
     @Column(name = "n_app_id")
     private Integer appId;
+    @Column(name = "n_pkg_name_real")
+    @JSONField(name = "pkgName")
+    private String pkgName;
     @Column(name = "n_member_id")
-    private Integer memberId;
+    private Integer memberId = 0;
     @Column(name = "n_device_id")
     private Integer deviceId;
+
+    @Column(name = "n_user_ip")
+    private Long userIp;
+    @Column(name = "n_country")
+    private String country;
+    @Column(name = "n_city")
+    private String city;
+
     @CreatedDate
     @Column(name = "n_created_at", updatable = false)
     protected Long createdAt;
