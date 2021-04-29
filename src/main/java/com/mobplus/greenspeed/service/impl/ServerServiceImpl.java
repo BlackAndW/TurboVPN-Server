@@ -1,5 +1,6 @@
 package com.mobplus.greenspeed.service.impl;
 
+import com.alibaba.fastjson.JSONObject;
 import com.apache.commons.beanutils.NewBeanUtils;
 import com.google.common.collect.Lists;
 import com.mobplus.greenspeed.entity.*;
@@ -8,21 +9,31 @@ import com.mobplus.greenspeed.repository.AccountLogRepository;
 import com.mobplus.greenspeed.repository.ServerAccountRepository;
 import com.mobplus.greenspeed.repository.ServerRepository;
 import com.mobplus.greenspeed.service.ServerService;
+import com.mobplus.greenspeed.util.IpUtils;
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.ExpressionUtils;
 import com.querydsl.core.types.Predicate;
 import com.yeecloud.meeto.common.exception.ServiceException;
 import com.yeecloud.meeto.common.util.Query;
 import com.yeecloud.meeto.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.FormBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
@@ -72,9 +83,9 @@ public class ServerServiceImpl implements ServerService {
                 Sort sort = Sort.by(new Sort.Order(Sort.Direction.ASC, "ratio"), new Sort.Order(Sort.Direction.ASC, "name"));
 
                 serverRepository.findAll(predicate, sort).forEach(resultList::add);
-                if (type == 0){
+                if (type == Server.Type.NORMAL){
                     normalServerCache.put("normalServerList", resultList);
-                } else if (type == 1){
+                } else if (type == Server.Type.VIP){
                     vipServerCache.put("vipServerList", resultList);
                 }
             }
@@ -85,18 +96,34 @@ public class ServerServiceImpl implements ServerService {
         }
     }
 
+    @Async
     @Override
-    public ServerAccount findServerAccountByServerId(Integer serverId, Integer appId, Integer memberId, Integer deviceId) throws ServiceException {
-        return executeFindServerAccountByServerId(serverId, appId, memberId, deviceId);
+    public synchronized void updateOnlineConn(String ipAddr, Integer onlineConn) throws ServiceException {
+        QServer qServer = QServer.server;
+        Predicate predicate = ExpressionUtils.and(qServer.deleted.eq(Boolean.FALSE), qServer.status.eq(2));
+        predicate = ExpressionUtils.and(predicate, qServer.ipAddr.eq(ipAddr));
+        Server server = serverRepository.findOne(predicate).orElse(null);
+        if (null != server && !server.isDeleted()) {
+            server.setOnlineConn(onlineConn);
+            serverRepository.save(server);
+        } else {
+            log.info("update fail! [{}] is not exist in server list!", ipAddr);
+        }
     }
 
-    private synchronized ServerAccount executeFindServerAccountByServerId(Integer serverId, Integer appId, Integer memberId, Integer deviceId) throws ServiceException {
+    @Override
+    public ServerAccount findServerAccountByServerId(Integer serverId, Integer appId, Integer memberId, Integer deviceId, String ipAddress, String pkgNameReal) throws IOException {
+        return executeFindServerAccountByServerId(serverId, appId, deviceId, ipAddress, pkgNameReal);
+    }
+
+    private synchronized ServerAccount executeFindServerAccountByServerId(Integer serverId, Integer appId, Integer deviceId, String ipAddress, String pkgNameReal) throws IOException {
         QServer qServer = QServer.server;
         Predicate predicateServer = ExpressionUtils.and(qServer.deleted.eq(Boolean.FALSE), qServer.status.eq(2));
         if (serverId != 0) {
             predicateServer = ExpressionUtils.and(predicateServer, qServer.id.eq(serverId));
         } else {
-            predicateServer = ExpressionUtils.and(predicateServer, qServer.type.eq(0));
+            // 老版本若参数是0，会随机取一个美国服务器
+            predicateServer = ExpressionUtils.and(predicateServer, qServer.type.eq(Server.Type.NORMAL));
             predicateServer = ExpressionUtils.and(predicateServer, qServer.nameEn.like("%United States%"));
         }
 
@@ -108,6 +135,9 @@ public class ServerServiceImpl implements ServerService {
         if (serverList.getContent().size() > 0) {
             int serverIndex = new Random().nextInt(serverList.getContent().size());
             server = serverList.getContent().get(serverIndex);
+            if (server.getOnlineConn() > server.getMaxConn()) {
+                server = changeServer(server);
+            }
             if (StringUtils.isEmpty(server.getCert())) {
                 server.setCert("-");
             }
@@ -130,18 +160,8 @@ public class ServerServiceImpl implements ServerService {
             int randomNum = new Random().nextInt(list.size());
             list.get(randomNum).setServer(server);
             ServerAccount account = list.get(randomNum);
-            //            account.setStatus(ServerAccount.State.PENDING);
-            //            accountRepository.save(account);
 
-            AccountLog log = new AccountLog();
-            log.setServerId(account.getServer().getId());
-            log.setAccountId(account.getId());
-            log.setAppId(appId);
-            log.setMemberId(memberId);
-            log.setDeviceId(deviceId);
-            log.setReleaseAt(0L);
-            accountLogRepository.save(log);
-
+            saveAccountLog(account, appId, deviceId, ipAddress, pkgNameReal);
             return account;
         }
         return null;
@@ -182,6 +202,44 @@ public class ServerServiceImpl implements ServerService {
         }
     }
 
+    @Override
+    @Transactional(rollbackFor = Throwable.class)
+    public Page<AccountLog> queryLog(Query query) throws ServiceException, ParseException {
+        QAccountLog accountLog = QAccountLog.accountLog;
+        Predicate predicate = new BooleanBuilder();
+        String pkgName = query.get("pkgName", String.class);
+        if (pkgName != null && pkgName.length() > 0) {
+            predicate = ExpressionUtils.and(predicate, accountLog.pkgName.eq(pkgName));
+        }
+        String userIp = query.get("userIp", String.class);
+        if (userIp != null && userIp.length() > 0) {
+            predicate = ExpressionUtils.and(predicate, accountLog.userIp.eq(IpUtils.ipStr2long(userIp)));
+        }
+        String country = query.get("country", String.class);
+        if (country != null && country.length() > 0) {
+            predicate = ExpressionUtils.and(predicate, accountLog.country.eq(country));
+        }
+        String city = query.get("city", String.class);
+        if (city != null && city.length() > 0) {
+            predicate = ExpressionUtils.and(predicate, accountLog.city.eq(city));
+        }
+        String serverName = query.get("serverName", String.class);
+        if (serverName != null && serverName.length() > 0) {
+            predicate = ExpressionUtils.and(predicate, accountLog.serverName.eq(serverName));
+        }
+        String startTimeStr = query.get("startTimeStr", String.class);
+        String endTimeStr = query.get("endTimeStr", String.class);
+        if (startTimeStr != null && endTimeStr != null && startTimeStr.length() > 0 && endTimeStr.length() > 0) {
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            long startTime = simpleDateFormat.parse(startTimeStr).getTime();
+            long endTime = simpleDateFormat.parse(endTimeStr).getTime();
+            predicate = ExpressionUtils.and(predicate, accountLog.createdAt.between(startTime, endTime));
+        }
+        Sort sort = Sort.by(new Sort.Order(Sort.Direction.DESC, "createdAt"));
+        PageRequest pagRequest = PageRequest.of(query.getPageNo() - 1, query.getPageSize(), sort);
+        return accountLogRepository.findAll(predicate, pagRequest);
+    }
+
     private List<Server> getServerCache(Cache normalServerCache, Cache vipServerCache, Integer type){
         if (type == Server.Type.NORMAL) {
             if (normalServerCache != null && normalServerCache.get("normalServerList") != null) {
@@ -200,5 +258,54 @@ public class ServerServiceImpl implements ServerService {
         Cache normalCache = cacheManager.getCache("normalCache");
         normalCache.clear();
         log.info("clear cache!");
+    }
+
+    private Server changeServer(Server server){
+        QServer qServer = QServer.server;
+        Predicate predicateServer = ExpressionUtils.and(qServer.deleted.eq(Boolean.FALSE), qServer.status.eq(2));
+        predicateServer = ExpressionUtils.and(predicateServer, qServer.type.eq(Server.Type.POOL));
+        predicateServer = ExpressionUtils.and(predicateServer, qServer.countryCode.eq(server.getCountryCode()));
+        predicateServer = ExpressionUtils.and(predicateServer, qServer.onlineConn.lt(qServer.maxConn));
+
+        Sort sort = Sort.by(new Sort.Order(Sort.Direction.ASC, "ratio"), new Sort.Order(Sort.Direction.ASC, "name"));
+        PageRequest pagRequestServer = PageRequest.of(0, 50, sort);
+        Page<Server> serverPoolList = serverRepository.findAll(predicateServer, pagRequestServer);
+        // 从满足条件的节点随机取一个，没有则返回原来的节点
+        if (serverPoolList.getContent().size() > 0) {
+            int serverIndex = new Random().nextInt(serverPoolList.getContent().size());
+            server = serverPoolList.getContent().get(serverIndex);
+            log.info("change to another server: " + server);
+        }
+        return server;
+    }
+
+    @Async
+    synchronized void saveAccountLog(ServerAccount account, Integer appId, Integer deviceId, String ipAddress, String pkgNameReal) throws IOException {
+        AccountLog log = new AccountLog();
+        JSONObject data = getIpInfo(ipAddress);
+        log.setServerId(account.getServer().getId());
+        log.setServerName(account.getServer().getName());
+        log.setAccountId(account.getId());
+        log.setAppId(appId);
+        log.setPkgName(pkgNameReal);
+        log.setDeviceId(deviceId);
+        log.setUserIp(IpUtils.ipStr2long(ipAddress));
+        log.setCountry(data.getString("country"));
+        log.setCity(data.getString("city"));
+        log.setReleaseAt(0L);
+        accountLogRepository.save(log);
+    }
+
+    private JSONObject getIpInfo(String ip) throws IOException {
+        OkHttpClient client = new OkHttpClient();
+        FormBody.Builder formBuilder = new FormBody.Builder();
+        formBuilder.add("ip", ip);
+        formBuilder.add("accessKey", "alibaba-inc");
+        Request request = new Request.Builder()
+                .url("https://ip.taobao.com/outGetIpInfo")
+                .post(formBuilder.build())
+                .build();
+        String resultJson = client.newCall(request).execute().body().string();
+        return JSONObject.parseObject(resultJson).getJSONObject("data");
     }
 }

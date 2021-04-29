@@ -1,6 +1,7 @@
 package com.mobplus.greenspeed.module.gateway.controller;
 
 
+import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mobplus.greenspeed.Constants;
@@ -29,6 +30,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -105,7 +107,7 @@ public class ServerController {
                                                     @RequestHeader(Constants.H_TOKEN) String token,
                                                     @RequestHeader(Constants.H_UUID) String devId,
                                                     @RequestHeader(Constants.H_IMEI) String imei,
-                                                    @PathVariable("id") Integer serverId) throws ServiceException {
+                                                    @PathVariable("id") Integer serverId) throws ServiceException, IOException {
         log.info("IpAddr:[{}] PKG:[{}] TOKEN:[{}] UUID:[{}] IMEI:[{}] RequestServer:[{}]", ParamUtils.getIpAddr(request), pkgName, token, devId, imei, serverId);
         Integer appId = getAppId(pkgName);
         if (appId == null) {
@@ -113,6 +115,7 @@ public class ServerController {
             return Result.FAILURE(ResultCode.PARAM_ERROR);
         }
         String ipAddress = ParamUtils.getIpAddr(request);
+        String pkgNameReal = request.getHeader("H006");
         boolean limit = isNeedRegionLimit(imei, ipAddress);
         if (limit) {
             return Result.FAILURE(getLimitError(isEnglish(locale)));
@@ -120,7 +123,7 @@ public class ServerController {
 
         Member member = memberService.findMemberByToken(appId, token);
         Device device = deviceService.findDeviceByIMEIOrUUID(imei, devId);
-        ServerAccount account = serverService.findServerAccountByServerId(serverId, appId, member != null ? member.getId() : 0, device != null ? device.getId() : 0);
+        ServerAccount account = serverService.findServerAccountByServerId(serverId, appId, member != null ? member.getId() : 0, device != null ? device.getId() : 0, ipAddress, pkgNameReal != null ? pkgNameReal : "");
         if (account != null) {
             ServerProfileVO profile = convert.convert(account);
             if (isEnglish(locale)) {
@@ -155,9 +158,9 @@ public class ServerController {
     }
 
     @GetMapping("/list")
-    public Result getServerList(Integer type) throws ServiceException {
+    public Result getServerList(@RequestParam Integer type) throws ServiceException {
         Query query = new Query(Maps.newHashMap());
-        query.put("type", Server.Type.ALL);
+        query.put("type", type);
         List<Server> list = serverService.query(query);
         List<ServerVO> resultList = transform(list, "en");
         return Result.SUCCESS(resultList);
@@ -183,11 +186,16 @@ public class ServerController {
         return Result.SUCCESS();
     }
 
+    @PostMapping("/update/online")
+    public void updateOnlineConn(@RequestParam(value = "ip_addr") String ipAddr, @RequestParam(value = "online_conn") Integer onlineConn) throws ServiceException {
+        serverService.updateOnlineConn(ipAddr, onlineConn);
+    }
+
     private List<ServerVO> transform(List<Server> list, String locale) {
         List<ServerVO> resultList = Lists.newArrayList();
         list.forEach(server -> {
             ServerVO vo = convert.convert(server);
-            log.info(vo.toString());
+            // log.info(vo.toString());
             vo.setServerName(server.getName());
             if (isEnglish(locale)) {
                 vo.setName(server.getNameEn());

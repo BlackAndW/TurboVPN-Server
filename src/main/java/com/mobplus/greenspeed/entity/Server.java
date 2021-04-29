@@ -27,7 +27,8 @@ public class Server extends AuditorEntity {
     public static interface Type {
         int NORMAL = 0;
         int VIP = 1;
-        int ALL = 2;
+        int POOL = 2;   // 备用连接节点
+        int ALL = 9;
     }
 
     @Id
@@ -66,4 +67,10 @@ public class Server extends AuditorEntity {
     private int status;
     @Column(name = "c_remark")
     private String remark;
+
+    @Column(name = "n_online_conn")
+    private Integer onlineConn = 0;
+    // 最大连接数默认80
+    @Column(name = "n_max_conn")
+    private Integer maxConn = 80;
 }
