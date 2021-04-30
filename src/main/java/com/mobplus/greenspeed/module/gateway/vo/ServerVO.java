@@ -43,4 +43,10 @@ public class ServerVO {
 
     private Integer type;
 
+    @JSONField(name = "onlineConn")
+    private Integer onlineConn;
+
+    @JSONField(name = "maxConn")
+    private Integer maxConn;
+
 }

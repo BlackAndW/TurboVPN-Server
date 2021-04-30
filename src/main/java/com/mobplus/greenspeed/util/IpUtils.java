@@ -1,6 +1,12 @@
 package com.mobplus.greenspeed.util;
 
+import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.FormBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+
+import java.io.IOException;
 
 /**
  * @author: Leonard
@@ -12,7 +18,7 @@ public class IpUtils {
     public static Long ipStr2long (String ipStr) {
         long ipLong = 0;
 
-        if (ipStr != null && ipStr.length() > 0 && !ipStr.equals("0:0:0:0:0:0:0:1")) {
+        if (ipStr != null && ipStr.length() > 0) {
             //将ip地址按.分割
             String[] ipSplit = ipStr.split("\\.");
             try {
@@ -33,7 +39,7 @@ public class IpUtils {
         return ipLong;
     }
 
-    private static String ipLong2String(long ipLong) {
+    public static String ipLong2Str(long ipLong) {
         StringBuffer ipStr = new StringBuffer();
         try {
             if (ipLong < 0) {
@@ -51,5 +57,19 @@ public class IpUtils {
             log.error("Long type ip to point ten type error :{}", e);
         }
         return ipStr.toString();
+    }
+
+    // 淘宝ip接口调用
+    private JSONObject getIpInfo(String ip) throws IOException {
+        OkHttpClient client = new OkHttpClient();
+        FormBody.Builder formBuilder = new FormBody.Builder();
+        formBuilder.add("ip", ip);
+        formBuilder.add("accessKey", "alibaba-inc");
+        Request request = new Request.Builder()
+                .url("https://ip.taobao.com/outGetIpInfo")
+                .post(formBuilder.build())
+                .build();
+        String resultJson = client.newCall(request).execute().body().string();
+        return JSONObject.parseObject(resultJson).getJSONObject("data");
     }
 }

@@ -123,7 +123,13 @@ public class ServerController {
 
         Member member = memberService.findMemberByToken(appId, token);
         Device device = deviceService.findDeviceByIMEIOrUUID(imei, devId);
-        ServerAccount account = serverService.findServerAccountByServerId(serverId, appId, member != null ? member.getId() : 0, device != null ? device.getId() : 0, ipAddress, pkgNameReal != null ? pkgNameReal : "");
+        ServerAccount account = serverService.findServerAccountByServerId(
+                serverId, appId,
+                member != null ? member.getId() : 0,
+                device != null ? device.getId() : 0,
+                ipAddress,
+                pkgNameReal != null ? pkgNameReal : ""
+        );
         if (account != null) {
             ServerProfileVO profile = convert.convert(account);
             if (isEnglish(locale)) {

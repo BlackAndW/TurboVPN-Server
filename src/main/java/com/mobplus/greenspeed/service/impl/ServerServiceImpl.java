@@ -1,11 +1,11 @@
 package com.mobplus.greenspeed.service.impl;
 
-import com.alibaba.fastjson.JSONObject;
 import com.apache.commons.beanutils.NewBeanUtils;
 import com.google.common.collect.Lists;
 import com.mobplus.greenspeed.entity.*;
 import com.mobplus.greenspeed.module.gateway.form.ServerForm;
 import com.mobplus.greenspeed.repository.AccountLogRepository;
+import com.mobplus.greenspeed.repository.Ip2locationRepository;
 import com.mobplus.greenspeed.repository.ServerAccountRepository;
 import com.mobplus.greenspeed.repository.ServerRepository;
 import com.mobplus.greenspeed.service.ServerService;
@@ -17,9 +17,6 @@ import com.yeecloud.meeto.common.exception.ServiceException;
 import com.yeecloud.meeto.common.util.Query;
 import com.yeecloud.meeto.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.FormBody;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
@@ -33,7 +30,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
@@ -58,6 +54,8 @@ public class ServerServiceImpl implements ServerService {
     private ServerAccountRepository accountRepository;
     @Autowired
     private AccountLogRepository accountLogRepository;
+    @Autowired
+    private Ip2locationRepository ip2locationRepository;
 
     private final static String IconBaseUrl = "http://res.turbovpns.com/images/flag_";
 
@@ -219,6 +217,10 @@ public class ServerServiceImpl implements ServerService {
         if (country != null && country.length() > 0) {
             predicate = ExpressionUtils.and(predicate, accountLog.country.eq(country));
         }
+        String region = query.get("region", String.class);
+        if (region != null && region.length() > 0) {
+            predicate = ExpressionUtils.and(predicate, accountLog.country.eq(region));
+        }
         String city = query.get("city", String.class);
         if (city != null && city.length() > 0) {
             predicate = ExpressionUtils.and(predicate, accountLog.city.eq(city));
@@ -280,32 +282,29 @@ public class ServerServiceImpl implements ServerService {
     }
 
     @Async
-    synchronized void saveAccountLog(ServerAccount account, Integer appId, Integer deviceId, String ipAddress, String pkgNameReal) throws IOException {
+    synchronized void saveAccountLog(ServerAccount account, Integer appId, Integer deviceId, String ipAddress, String pkgNameReal) {
         AccountLog log = new AccountLog();
-        JSONObject data = getIpInfo(ipAddress);
-        log.setServerId(account.getServer().getId());
-        log.setServerName(account.getServer().getName());
-        log.setAccountId(account.getId());
-        log.setAppId(appId);
-        log.setPkgName(pkgNameReal);
-        log.setDeviceId(deviceId);
-        log.setUserIp(IpUtils.ipStr2long(ipAddress));
-        log.setCountry(data.getString("country"));
-        log.setCity(data.getString("city"));
-        log.setReleaseAt(0L);
-        accountLogRepository.save(log);
+        long ipLong = IpUtils.ipStr2long(ipAddress);
+        if (ipLong != 0) {
+            Ip2location ipInfo = getIpInfo(ipLong);
+            log.setServerId(account.getServer().getId());
+            log.setServerName(account.getServer().getName());
+            log.setAccountId(account.getId());
+            log.setAppId(appId);
+            log.setPkgName(pkgNameReal);
+            log.setDeviceId(deviceId);
+            log.setUserIp(ipLong);
+            log.setCountry(ipInfo.getCountry());
+            log.setRegion(ipInfo.getRegion());
+            log.setCity(ipInfo.getCity());
+            log.setReleaseAt(0L);
+            accountLogRepository.save(log);
+        }
     }
 
-    private JSONObject getIpInfo(String ip) throws IOException {
-        OkHttpClient client = new OkHttpClient();
-        FormBody.Builder formBuilder = new FormBody.Builder();
-        formBuilder.add("ip", ip);
-        formBuilder.add("accessKey", "alibaba-inc");
-        Request request = new Request.Builder()
-                .url("https://ip.taobao.com/outGetIpInfo")
-                .post(formBuilder.build())
-                .build();
-        String resultJson = client.newCall(request).execute().body().string();
-        return JSONObject.parseObject(resultJson).getJSONObject("data");
+    private Ip2location getIpInfo(Long ipLong) {
+        QIp2location ipInfo = QIp2location.ip2location;
+        Predicate predicate = ipInfo.ipFrom.loe(ipLong).and(ipInfo.ipTo.goe(ipLong));
+        return ip2locationRepository.findOne(predicate).orElse(null);
     }
 }

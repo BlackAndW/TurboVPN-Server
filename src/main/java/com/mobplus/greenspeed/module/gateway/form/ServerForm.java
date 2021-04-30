@@ -26,12 +26,13 @@ public class ServerForm {
     @JSONField(name = "b03")
     private String summaryEn;
 
-    @JSONField(name = "b05")
-    @NotNull(message = "请输入节点网速")
-    private Integer speed;
+//    @JSONField(name = "b05")
+//    @NotNull(message = "请输入节点网速")
+//    private Integer speed;
 
-    @NotNull(message = "请输入节点优先级")
     private Integer ratio;
+
+    private Integer maxConn;
 
     @NotBlank(message = "请选择国家")
     private String countryCode;

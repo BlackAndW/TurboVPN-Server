@@ -48,7 +48,7 @@ public class Server extends AuditorEntity {
     @Column(name = "n_speed")
     private int speed;
     @Column(name = "n_ratio")
-    private int ratio;
+    private int ratio = 1;
     @Column(name = "c_country_code")
     private String countryCode;
     @Column(name = "c_region")
