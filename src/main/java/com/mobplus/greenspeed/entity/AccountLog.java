@@ -52,6 +52,8 @@ public class AccountLog implements Serializable {
     private Long userIp;
     @Column(name = "n_country")
     private String country;
+    @Column(name = "n_region")
+    private String region;
     @Column(name = "n_city")
     private String city;
 
