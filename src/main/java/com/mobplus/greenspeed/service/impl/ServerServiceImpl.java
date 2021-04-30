@@ -279,8 +279,7 @@ public class ServerServiceImpl implements ServerService {
         return server;
     }
 
-    @Async
-    synchronized void saveAccountLog(ServerAccount account, Integer appId, Integer deviceId, String ipAddress, String pkgNameReal) throws IOException {
+    private void saveAccountLog(ServerAccount account, Integer appId, Integer deviceId, String ipAddress, String pkgNameReal) throws IOException {
         AccountLog log = new AccountLog();
         JSONObject data = getIpInfo(ipAddress);
         log.setServerId(account.getServer().getId());
@@ -296,7 +295,14 @@ public class ServerServiceImpl implements ServerService {
         accountLogRepository.save(log);
     }
 
-    private JSONObject getIpInfo(String ip) throws IOException {
+    /***
+     * 利用淘宝接口查询ip对应国家
+     * @param ip
+     * @return
+     * @throws IOException
+     */
+    @Async
+    synchronized JSONObject getIpInfo(String ip) throws IOException {
         OkHttpClient client = new OkHttpClient();
         FormBody.Builder formBuilder = new FormBody.Builder();
         formBuilder.add("ip", ip);

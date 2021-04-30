@@ -76,8 +76,14 @@ public class DruidConfiguration {
     @Value("${spring.datasource.filters}")
     private String filters;
 
-    @Value("{spring.datasource.connectionProperties}")
+    @Value("${spring.datasource.connectionProperties}")
     private String connectionProperties;
+
+    @Value("${spring.datasource.removeAbandoned}")
+    private Boolean removeAbandoned;
+
+    @Value("${spring.datasource.removeAbandonedTimeout}")
+    private Integer removeAbandonedTimeout;
 
     @Bean // 声明其为Bean实例
     @Primary // 在同样的DataSource中，首先使用被标注的DataSource
@@ -102,6 +108,8 @@ public class DruidConfiguration {
         datasource.setTestOnReturn(testOnReturn);
         datasource.setPoolPreparedStatements(poolPreparedStatements);
         datasource.setMaxPoolPreparedStatementPerConnectionSize(maxPoolPreparedStatementPerConnectionSize);
+        datasource.setRemoveAbandoned(removeAbandoned);
+        datasource.setRemoveAbandonedTimeout(removeAbandonedTimeout);
         try {
             datasource.setFilters(filters);
         } catch (SQLException e) {
