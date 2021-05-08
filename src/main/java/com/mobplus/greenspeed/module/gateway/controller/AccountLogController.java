@@ -77,20 +77,26 @@ public class AccountLogController {
                 append("where 1=1 ");
         if (query.containsKey("userIp")) {
             sb.append(" and n_user_ip=").append(IpUtils.ipStr2long(query.get("userIp", String.class)));
-        } else if (query.containsKey("country")) {
+        }
+        if (query.containsKey("country")) {
             sb.append(" and n_country='").append(query.get("country")).append("'");
-        } else if (query.containsKey("region")) {
+        }
+        if (query.containsKey("region")) {
             sb.append(" and n_region='").append(query.get("region")).append("'");
-        } else  if (query.containsKey("city")) {
+        }
+        if (query.containsKey("city")) {
             sb.append(" and n_city='").append(query.get("city")).append("'");
-        } else if (query.containsKey("serverName")) {
+        }
+        if (query.containsKey("serverName")) {
             sb.append(" and n_server_name='").append(query.get("serverName")).append("'");
-        } else if (query.containsKey("startTimeStr") && query.containsKey("endTimeStr")) {
+        }
+        if (query.containsKey("startTimeStr") && query.containsKey("endTimeStr")) {
             SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             long startTime = simpleDateFormat.parse(query.get("startTimeStr", String.class)).getTime();
             long endTime = simpleDateFormat.parse(query.get("endTimeStr", String.class)).getTime();
             sb.append(" and n_created_at between ").append(startTime).append(" and ").append(endTime);
-        } else if (query.containsKey("pkgName")) {
+        }
+        if (query.containsKey("pkgName")) {
             sb.append(" and n_pkg_name_real='").append(query.get("pkgName")).append("'");
         }
         final String rootPath = "/www/wwwroot/res.turbovpns.com/";
