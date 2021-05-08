@@ -93,8 +93,8 @@ public class AccountLogController {
         } else if (query.containsKey("pkgName")) {
             sb.append(" and n_pkg_name_real='").append(query.get("pkgName")).append("'");
         }
-        final String rootPath = "/www/wwwroot/res.turbovpns.com";
-        final String filePath = "/download/accountLogFiles/";
+        final String rootPath = "/www/wwwroot/res.turbovpns.com/";
+        final String filePath = "download/accountLogFiles/";
         final String fileName = DateUtils.dateToString(new Date(), "yyyyMMddHHmmss") + ".xls";
         sb.append(" \" green_speed > ").append(rootPath).append(filePath).append(fileName);
         ProcessUtils.execute(sb.toString());
