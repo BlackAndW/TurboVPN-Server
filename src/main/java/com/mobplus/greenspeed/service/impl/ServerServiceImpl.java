@@ -287,6 +287,11 @@ public class ServerServiceImpl implements ServerService {
         long ipLong = IpUtils.ipStr2long(ipAddress);
         if (ipLong != 0) {
             Ip2location ipInfo = getIpInfo(ipLong);
+            if (ipInfo != null) {
+                log.setCountry(ipInfo.getCountry());
+                log.setRegion(ipInfo.getRegion());
+                log.setCity(ipInfo.getCity());
+            }
             log.setServerId(account.getServer().getId());
             log.setServerName(account.getServer().getName());
             log.setAccountId(account.getId());
@@ -294,9 +299,6 @@ public class ServerServiceImpl implements ServerService {
             log.setPkgName(pkgNameReal);
             log.setDeviceId(deviceId);
             log.setUserIp(ipLong);
-            log.setCountry(ipInfo.getCountry());
-            log.setRegion(ipInfo.getRegion());
-            log.setCity(ipInfo.getCity());
             log.setReleaseAt(0L);
             accountLogRepository.save(log);
         }
