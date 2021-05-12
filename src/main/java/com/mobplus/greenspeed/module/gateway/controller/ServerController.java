@@ -167,6 +167,7 @@ public class ServerController {
     public Result getServerList(@RequestParam Integer type) throws ServiceException {
         Query query = new Query(Maps.newHashMap());
         query.put("type", type);
+        query.put("clearCache", true);
         List<Server> list = serverService.query(query);
         List<ServerVO> resultList = transform(list, "en");
         return Result.SUCCESS(resultList);
