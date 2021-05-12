@@ -67,8 +67,11 @@ public class ServerServiceImpl implements ServerService {
 
             Integer status = query.get("status", Integer.class);
             Integer type = query.get("type", Integer.class);
+            Boolean clearCache = query.get("clearCache", Boolean.class);
+            if (clearCache != null && clearCache) { clearCache(); }
+            // 查询缓存
             List<Server> resultList = getServerCache(normalServerCache, vipServerCache, type);
-
+            // 未缓存则查询数据库并缓存
             if (resultList .size() < 1) {
                 QServer qServer = QServer.server;
                 Predicate predicate = qServer.deleted.eq(Boolean.FALSE);
@@ -284,6 +287,7 @@ public class ServerServiceImpl implements ServerService {
     @Async
     synchronized void saveAccountLog(ServerAccount account, Integer appId, Integer deviceId, String ipAddress, String pkgNameReal) {
         AccountLog log = new AccountLog();
+//        ipAddress = "192.155.85.6";
         long ipLong = IpUtils.ipStr2long(ipAddress);
         if (ipLong != 0) {
             Ip2location ipInfo = getIpInfo(ipLong);
@@ -305,8 +309,6 @@ public class ServerServiceImpl implements ServerService {
     }
 
     private Ip2location getIpInfo(Long ipLong) {
-        QIp2location ipInfo = QIp2location.ip2location;
-        Predicate predicate = ipInfo.ipFrom.loe(ipLong).and(ipInfo.ipTo.goe(ipLong));
-        return ip2locationRepository.findOne(predicate).orElse(null);
+        return ip2locationRepository.findIpInfo(ipLong);
     }
 }
