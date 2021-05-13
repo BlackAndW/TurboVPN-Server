@@ -66,7 +66,7 @@ public class AccountLogController {
     public JSONObject getAccountExcel(@RequestParam Map<String, Object> params) throws ParseException {
         StringBuilder sb = new StringBuilder();
         Query query = new Query(Maps.newHashMap(params));
-        sb.append("mysql -uroot -p").append(password).append(" -e \"select ").
+        sb.append("mysql -umobplus -p").append(password).append(" -e \"select ").
                 append("n_user_ip as 用户ip（未转化）, ").
                 append("n_country as 所属国家, ").
                 append("n_region as 地区, ").
