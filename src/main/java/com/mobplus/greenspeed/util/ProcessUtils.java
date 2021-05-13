@@ -16,7 +16,7 @@ public class ProcessUtils {
 
     public static void execute(String cmd) {
         ProcessBuilder builder = new ProcessBuilder();
-        log.info("execute: " +cmd);
+//        log.info("execute: " +cmd);
         builder.command("/bin/sh", "-c", cmd);
         //将标准输入流和错误输入流合并，通过标准输入流读取信息
         builder.redirectErrorStream(true);
