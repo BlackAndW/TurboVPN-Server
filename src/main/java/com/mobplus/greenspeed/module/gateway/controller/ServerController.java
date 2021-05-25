@@ -1,7 +1,6 @@
 package com.mobplus.greenspeed.module.gateway.controller;
 
 
-import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mobplus.greenspeed.Constants;
@@ -10,10 +9,12 @@ import com.mobplus.greenspeed.module.gateway.convert.ServerConvert;
 import com.mobplus.greenspeed.module.gateway.form.ServerForm;
 import com.mobplus.greenspeed.module.gateway.vo.ServerProfileVO;
 import com.mobplus.greenspeed.module.gateway.vo.ServerVO;
+import com.mobplus.greenspeed.repository.Ip2locationRepository;
 import com.mobplus.greenspeed.service.AppService;
 import com.mobplus.greenspeed.service.DeviceService;
 import com.mobplus.greenspeed.service.MemberService;
 import com.mobplus.greenspeed.service.ServerService;
+import com.mobplus.greenspeed.util.IpUtils;
 import com.yeecloud.meeto.common.exception.ServiceException;
 import com.yeecloud.meeto.common.result.Result;
 import com.yeecloud.meeto.common.result.ResultCode;
@@ -65,6 +66,8 @@ public class ServerController {
     private IPParserService ipParserService;
     @Autowired
     private ConfigureService configureService;
+    @Autowired
+    private Ip2locationRepository ip2locationRepository;
 
     @PostMapping("/c0001")
     public Result getServerList(@RequestHeader(Constants.H_PACKGE_NAME) String pkgName,
@@ -98,7 +101,17 @@ public class ServerController {
         query.put("type", type);
         List<Server> list = serverService.query(query);
         List<ServerVO> resultList = transform(list, locale);
-        return Result.SUCCESS(resultList);
+
+        String ipAddress = ParamUtils.getIpAddr(request);
+        long ipLong = IpUtils.ipStr2long(ipAddress);
+        String message = "ok";
+        if (ipLong != 0) {
+            Ip2location ipInfo = ip2locationRepository.findIpInfo(ipLong);
+            if (ipInfo != null) {
+                message = ipInfo.getCountryCode();
+            }
+        }
+        return new Result<>(200, message, resultList);
     }
 
     @PostMapping("/c0001/{id}")
