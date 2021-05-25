@@ -111,7 +111,7 @@ public class ServerController {
                 message = ipInfo.getCountryCode();
             }
         }
-        return new Result<>(200, message, resultList);
+        return new Result<>(2000, message, resultList);
     }
 
     @PostMapping("/c0001/{id}")
