@@ -64,31 +64,57 @@ public class ServerServiceImpl implements ServerService {
         try {
             Cache normalServerCache = cacheManager.getCache("normalCache");
             Cache vipServerCache = cacheManager.getCache("normalCache");
+            Cache iosNormalServerCache = cacheManager.getCache("normalCache");
+            Cache iosVipServerCache = cacheManager.getCache("normalCache");
 
             Integer status = query.get("status", Integer.class);
             Integer type = query.get("type", Integer.class);
             Boolean clearCache = query.get("clearCache", Boolean.class);
             if (clearCache != null && clearCache) { clearCache(); }
-            // 查询缓存
-            List<Server> resultList = getServerCache(normalServerCache, vipServerCache, type);
-            // 未缓存则查询数据库并缓存
-            if (resultList .size() < 1) {
-                QServer qServer = QServer.server;
-                Predicate predicate = qServer.deleted.eq(Boolean.FALSE);
-                if (null != status  && status != 0 && status > 0) {
-                    predicate = ExpressionUtils.and(predicate, qServer.status.eq(status));
-                }
-                if (type != Server.Type.ALL) {
-                    predicate = ExpressionUtils.and(predicate, qServer.type.eq(type));
-                }
-                Sort sort = Sort.by(new Sort.Order(Sort.Direction.ASC, "ratio"), new Sort.Order(Sort.Direction.ASC, "name"));
 
-                serverRepository.findAll(predicate, sort).forEach(resultList::add);
+            // 查询缓存
+            List<Server> resultList = Lists.newArrayList();
+            List<Server> iosResultList = Lists.newArrayList();
+            String mobileOS = query.get("mobileOS", String.class);
+
+            if (null != mobileOS && !mobileOS.equals("ios")) {
+                resultList = getServerCache(normalServerCache, vipServerCache, type);
+                if (resultList.size() > 1) return resultList;
+            } else {
+                iosResultList = getIosServerCache(iosNormalServerCache, iosVipServerCache, type);
+                if (iosResultList.size() > 1) return iosResultList;
+            }
+
+            // 未缓存则查询数据库并缓存
+            QServer qServer = QServer.server;
+            Predicate predicate = qServer.deleted.eq(Boolean.FALSE);
+            if (null != status  && status != 0 && status > 0) {
+                predicate = ExpressionUtils.and(predicate, qServer.status.eq(status));
+            }
+            if (type != Server.Type.ALL) {
+                predicate = ExpressionUtils.and(predicate, qServer.type.eq(type));
+            }
+            Sort sort = Sort.by(new Sort.Order(Sort.Direction.ASC, "ratio"), new Sort.Order(Sort.Direction.ASC, "name"));
+
+            // 非ios端，去除中国节点
+            if (null != mobileOS && !mobileOS.equals("ios")) {
+                predicate = ExpressionUtils.and(predicate, qServer.countryCode.notEqualsIgnoreCase("CN"));
+            } // ios端缓存后直接返回
+            else {
+                serverRepository.findAll(predicate, sort).forEach(iosResultList::add);
                 if (type == Server.Type.NORMAL){
-                    normalServerCache.put("normalServerList", resultList);
+                    normalServerCache.put("iosNormalServerList", iosResultList);
                 } else if (type == Server.Type.VIP){
-                    vipServerCache.put("vipServerList", resultList);
+                    vipServerCache.put("iosVipServerList", iosResultList);
                 }
+                return iosResultList;
+            }
+
+            serverRepository.findAll(predicate, sort).forEach(resultList::add);
+            if (type == Server.Type.NORMAL){
+                normalServerCache.put("normalServerList", resultList);
+            } else if (type == Server.Type.VIP){
+                vipServerCache.put("vipServerList", resultList);
             }
             return resultList;
         } catch (Throwable throwable) {
@@ -258,6 +284,21 @@ public class ServerServiceImpl implements ServerService {
         log.info("refresh cache!");
         return Lists.newArrayList();
     }
+
+    private List<Server> getIosServerCache(Cache iosNormalServerCache, Cache iosVipServerCache, Integer type){
+        if (type == Server.Type.NORMAL) {
+            if (iosNormalServerCache != null && iosNormalServerCache.get("iosNormalServerList") != null) {
+                return (List<Server>) iosNormalServerCache.get("iosNormalServerList").get();
+            }
+        } else if (type == Server.Type.VIP) {
+            if (iosVipServerCache != null && iosVipServerCache.get("iosVipServerList") != null) {
+                return (List<Server>) iosVipServerCache.get("iosVipServerList").get();
+            }
+        }
+        log.info("refresh ios cache!");
+        return Lists.newArrayList();
+    }
+
 
     private void clearCache(){
         Cache normalCache = cacheManager.getCache("normalCache");

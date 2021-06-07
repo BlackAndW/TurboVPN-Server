@@ -71,16 +71,18 @@ public class ServerController {
 
     @PostMapping("/c0001")
     public Result getServerList(@RequestHeader(Constants.H_PACKGE_NAME) String pkgName,
-                                @RequestHeader(Constants.H_LOCALE) String locale) throws ServiceException {
+                                @RequestHeader(Constants.H_LOCALE) String locale,
+                                @RequestHeader(value = Constants.H_MOIBILE_OS, defaultValue = "android") String mobileOS) throws ServiceException {
 
-        return getResultList(pkgName, locale, Server.Type.NORMAL);
+        return getResultList(pkgName, locale, mobileOS, Server.Type.NORMAL);
     }
 
     @PostMapping("/vip")
     public Result getVipServerList(@RequestHeader(Constants.H_PACKGE_NAME) String pkgName,
-                                @RequestHeader(Constants.H_LOCALE) String locale) throws ServiceException {
+                                    @RequestHeader(Constants.H_LOCALE) String locale,
+                                   @RequestHeader(value = Constants.H_MOIBILE_OS, defaultValue = "android") String mobileOS) throws ServiceException {
 
-        return getResultList(pkgName, locale, Server.Type.VIP);
+        return getResultList(pkgName, locale, mobileOS, Server.Type.VIP);
     }
 
     /**
@@ -91,7 +93,7 @@ public class ServerController {
      * @return
      * @throws ServiceException
      */
-    private Result getResultList(String pkgName, String locale, Integer type) throws ServiceException{
+    private Result getResultList(String pkgName, String locale, String mobileOS, Integer type) throws ServiceException{
         Integer appId = getAppId(pkgName);
         if (appId == null) {
             return Result.FAILURE(ResultCode.PARAM_ERROR);
@@ -99,18 +101,19 @@ public class ServerController {
         Query query = new Query(Maps.newHashMap());
         query.put("status", Server.State.RUNNING);
         query.put("type", type);
+        query.put("mobileOS", mobileOS);
         List<Server> list = serverService.query(query);
         List<ServerVO> resultList = transform(list, locale);
 
         String ipAddress = ParamUtils.getIpAddr(request);
-        long ipLong = IpUtils.ipStr2long(ipAddress);
+//        long ipLong = IpUtils.ipStr2long(ipAddress);
         String message = "ok";
-        if (ipLong != 0) {
-            Ip2location ipInfo = ip2locationRepository.findIpInfo(ipLong);
-            if (ipInfo != null) {
-                message = ipInfo.getCountryCode();
-            }
-        }
+//        if (ipLong != 0) {
+//            Ip2location ipInfo = ip2locationRepository.findIpInfo(ipLong);
+//            if (ipInfo != null) {
+//                message = ipInfo.getCountryCode();
+//            }
+//        }
         return new Result<>(2000, message, resultList);
     }
 
