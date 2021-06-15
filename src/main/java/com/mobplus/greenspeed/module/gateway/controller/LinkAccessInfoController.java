@@ -37,18 +37,15 @@ public class LinkAccessInfoController {
         //写入相应的文件
 //        BufferedWriter out = new BufferedWriter(new FileWriter("d:\\1-project\\link-info-detail.log"));
         BufferedWriter out = new BufferedWriter(new FileWriter("/www/wwwroot/apk.siteps.cn/link-info-detail.log"));
-        makeLinkInfo(in, out, "---", 0);
-    }
+        makeLinkInfo(in, out, " --- ", 0);
 
-    @RequestMapping("linkInfoCount")
-    public void modifyLogFileCount() throws IOException {
-        //读取文件(字符流)
+        //生成ip统计
 //        BufferedReader in = new BufferedReader(new FileReader("d:\\1-project\\link-info-c.log"));
-        BufferedReader in = new BufferedReader(new FileReader("/www/wwwroot/apk.siteps.cn/link-info-c.log"));
+        BufferedReader in2 = new BufferedReader(new FileReader("/www/wwwroot/apk.siteps.cn/link-info-c.log"));
         //写入相应的文件
 //        BufferedWriter out = new BufferedWriter(new FileWriter("d:\\1-project\\link-info-count.log"));
-        BufferedWriter out = new BufferedWriter(new FileWriter("/www/wwwroot/apk.siteps.cn/link-info-count.log"));
-        makeLinkInfo(in, out, " ", 1);
+        BufferedWriter out2 = new BufferedWriter(new FileWriter("/www/wwwroot/apk.siteps.cn/link-info-count.log"));
+        makeLinkInfo(in2, out2, " ", 1);
     }
 
     private void makeLinkInfo(BufferedReader in, BufferedWriter out, String regex, int ipIndex) throws IOException {
@@ -62,9 +59,12 @@ public class LinkAccessInfoController {
             if (ipAddress != null && ipAddress.length() > 0) {
                 long ipLong = IpUtils.ipStr2long(ipAddress);
                 Ip2location ipInfo = ip2locationRepository.findIpInfo(ipLong);
-                str = ipInfo.getCountry() + "-" + ipInfo.getRegion() + "-" + ipInfo.getCity() + regex + str;
+                if (ipIndex != 1) {
+                    str = ipInfo.getCountry() + " --> " + ipInfo.getRegion() + " --> " + ipInfo.getCity() + " --- " + str;
+                } else {
+                    str = ipInfo.getCountry() + " --> " + ipInfo.getRegion() + " --> " + ipInfo.getCity() + " --- " + ipAddress + " --- " + str.split(regex)[0];
+                }
             }
-            System.out.println(str);
             //写入相关文件
             out.write(str);
             out.newLine();
