@@ -105,7 +105,7 @@ public class ServerController {
         List<Server> list = serverService.query(query);
         List<ServerVO> resultList = transform(list, locale);
 
-        String ipAddress = ParamUtils.getIpAddr(request);
+//        String ipAddress = ParamUtils.getIpAddr(request);
 //        long ipLong = IpUtils.ipStr2long(ipAddress);
         String message = "ok";
 //        if (ipLong != 0) {
