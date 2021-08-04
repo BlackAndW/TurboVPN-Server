@@ -9,6 +9,8 @@ server:
 spring:
   profiles:
     active: prod
+  main:
+    allow-bean-definition-overriding: true
   servlet.multipart.max-file-size: 10MB
   http.encoding:
     charset: UTF-8
