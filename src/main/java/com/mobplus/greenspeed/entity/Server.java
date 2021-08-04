@@ -73,4 +73,6 @@ public class Server extends AuditorEntity {
     // 最大连接数默认80
     @Column(name = "n_max_conn")
     private Integer maxConn = 80;
+    @Column(name = "n_total_conn")
+    private Long totalConn = 0L;
 }

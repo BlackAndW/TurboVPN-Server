@@ -49,4 +49,7 @@ public class ServerVO {
     @JSONField(name = "maxConn")
     private Integer maxConn;
 
+    @JSONField(name = "totalConn")
+    private Long totalConn;
+
 }
