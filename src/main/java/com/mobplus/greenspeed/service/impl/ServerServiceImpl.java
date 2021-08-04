@@ -149,27 +149,34 @@ public class ServerServiceImpl implements ServerService {
         if (serverId != 0) {
             predicateServer = ExpressionUtils.and(predicateServer, qServer.id.eq(serverId));
         } else {
-            // 老版本若参数是0，会随机取一个美国服务器
+            // 新版本若参数是0，按顺序连接
             predicateServer = ExpressionUtils.and(predicateServer, qServer.type.eq(Server.Type.NORMAL));
-            predicateServer = ExpressionUtils.and(predicateServer, qServer.nameEn.like("%United States%"));
         }
 
         Sort sort = Sort.by(new Sort.Order(Sort.Direction.ASC, "ratio"), new Sort.Order(Sort.Direction.ASC, "name"));
-        PageRequest pagRequestServer = PageRequest.of(0, 10, sort);
+        PageRequest pagRequestServer = PageRequest.of(0, 99, sort);
         Page<Server> serverList = serverRepository.findAll(predicateServer, pagRequestServer);
 
         Server server = new Server();
-        if (serverList.getContent().size() > 0) {
-            int serverIndex = new Random().nextInt(serverList.getContent().size());
-            server = serverList.getContent().get(serverIndex);
+        // 自动连接模式，按顺序获取节点，满载依次递进
+        if (serverList.getContent().size() > 1) {
+            for (int serverIndex = 0; serverIndex < serverList.getContent().size(); serverIndex++) {
+                server = serverList.getContent().get(serverIndex);
+                if (server.getOnlineConn() < server.getMaxConn()) {
+                    break;
+                }
+            }
+            // 手动连接模式，满载切换同国家其他备用节点
+        } else if (serverList.getContent().size() > 0) {
+            server = serverList.getContent().get(0);
             if (server.getOnlineConn() > server.getMaxConn()) {
                 server = changeServer(server);
             }
-            if (StringUtils.isEmpty(server.getCert())) {
-                server.setCert("-");
-            }
         }
 
+        if (StringUtils.isEmpty(server.getCert())) {
+            server.setCert("-");
+        }
         Cache accountCache = cacheManager.getCache("redisCache");
         List<ServerAccount> list = Lists.newArrayList();
         if (accountCache != null && accountCache.get("accountCache") != null) {
@@ -187,7 +194,6 @@ public class ServerServiceImpl implements ServerService {
             int randomNum = new Random().nextInt(list.size());
             list.get(randomNum).setServer(server);
             ServerAccount account = list.get(randomNum);
-
             saveAccountLog(account, appId, deviceId, ipAddress, pkgNameReal);
             return account;
         }
@@ -347,6 +353,10 @@ public class ServerServiceImpl implements ServerService {
             log.setReleaseAt(0L);
             accountLogRepository.save(log);
         }
+        // 统计各节点总连接数
+        Server server = account.getServer();
+        server.setTotalConn(server.getTotalConn() + 1);
+        serverRepository.save(account.getServer());
     }
 
     private Ip2location getIpInfo(Long ipLong) {
