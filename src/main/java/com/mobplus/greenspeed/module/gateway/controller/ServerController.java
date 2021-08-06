@@ -2,6 +2,8 @@ package com.mobplus.greenspeed.module.gateway.controller;
 
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.PropertyNamingStrategy;
 import com.alibaba.fastjson.serializer.SerializeConfig;
 import com.google.common.collect.Lists;
@@ -107,7 +109,11 @@ public class ServerController {
         query.put("mobileOS", mobileOS);
         List<Server> list = serverService.query(query);
         List<ServerVO> resultList = transform(list, locale);
-
+        // 下划线转驼峰，（默认下划线的原因未知）
+        SerializeConfig config = new SerializeConfig();
+        config.propertyNamingStrategy = PropertyNamingStrategy.CamelCase;
+        String response = JSON.toJSONString(resultList, config);
+        JSONArray result = JSONArray.parseArray(response);
 //        String ipAddress = ParamUtils.getIpAddr(request);
 //        long ipLong = IpUtils.ipStr2long(ipAddress);
         String message = "ok";
@@ -117,7 +123,7 @@ public class ServerController {
 //                message = ipInfo.getCountryCode();
 //            }
 //        }
-        return new Result<>(2000, message, resultList);
+        return new Result<>(2000, message, result);
     }
 
     @PostMapping("/c0001/{id}")
