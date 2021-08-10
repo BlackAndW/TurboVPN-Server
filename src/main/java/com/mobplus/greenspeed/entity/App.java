@@ -29,6 +29,8 @@ public class App extends AuditorEntity {
     private String appName;
     @Column(name = "c_icon_url")
     private String iconUrl;
+    @Column(name = "n_order")
+    private String order;
     @Column(name = "c_desc")
     private String desc;
     @Column(name = "n_status")

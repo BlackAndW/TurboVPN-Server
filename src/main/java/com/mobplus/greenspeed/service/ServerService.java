@@ -39,4 +39,9 @@ public interface ServerService {
 
     ServerAccount findServerAccountByServerId(Integer serverId, Integer appId, Integer memberId, Integer devId, String ipAddress, String pkgNameReal) throws ServiceException, IOException;
 
+    List<String> getOrderByApp(String pkgName) throws ServiceException;
+
+    void updateOrderByApp(String pkgName, Query query) throws ServiceException;
+
+    List<Server> sortByOrder(String pkgName, List<Server> serverList) throws ServiceException;
 }
