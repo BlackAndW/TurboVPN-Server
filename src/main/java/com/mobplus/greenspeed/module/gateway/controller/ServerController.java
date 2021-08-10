@@ -38,6 +38,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Title
@@ -77,9 +78,10 @@ public class ServerController {
     @PostMapping("/c0001")
     public Result getServerList(@RequestHeader(Constants.H_PACKGE_NAME) String pkgName,
                                 @RequestHeader(Constants.H_LOCALE) String locale,
-                                @RequestHeader(value = Constants.H_MOIBILE_OS, defaultValue = "android") String mobileOS) throws ServiceException {
+                                @RequestHeader(value = Constants.H_MOIBILE_OS, defaultValue = "android") String mobileOS,
+                                @RequestHeader(value = Constants.H_PACKGE_NAME_REAL, defaultValue = "") String pkgNameReal) throws ServiceException {
 
-        return getResultList(pkgName, locale, mobileOS, Server.Type.NORMAL);
+        return getResultList(pkgName, locale, mobileOS, Server.Type.NORMAL, pkgNameReal);
     }
 
     @PostMapping("/vip")
@@ -87,7 +89,7 @@ public class ServerController {
                                     @RequestHeader(Constants.H_LOCALE) String locale,
                                    @RequestHeader(value = Constants.H_MOIBILE_OS, defaultValue = "android") String mobileOS) throws ServiceException {
 
-        return getResultList(pkgName, locale, mobileOS, Server.Type.VIP);
+        return getResultList(pkgName, locale, mobileOS, Server.Type.VIP, "");
     }
 
     /**
@@ -98,7 +100,7 @@ public class ServerController {
      * @return
      * @throws ServiceException
      */
-    private Result getResultList(String pkgName, String locale, String mobileOS, Integer type) throws ServiceException{
+    private Result getResultList(String pkgName, String locale, String mobileOS, Integer type, String pkgNameReal) throws ServiceException{
         Integer appId = getAppId(pkgName);
         if (appId == null) {
             return Result.FAILURE(ResultCode.PARAM_ERROR);
@@ -108,21 +110,17 @@ public class ServerController {
         query.put("type", type);
         query.put("mobileOS", mobileOS);
         List<Server> list = serverService.query(query);
+        if (pkgNameReal != null && pkgNameReal.length() > 0) {
+            list = serverService.sortByOrder(pkgNameReal, list);
+        }
         List<ServerVO> resultList = transform(list, locale);
-        // 下划线转驼峰，（默认下划线的原因未知）
+
+        // 下划线转驼峰，（默认下划线的原因大概率是jar包问题）
         SerializeConfig config = new SerializeConfig();
         config.propertyNamingStrategy = PropertyNamingStrategy.CamelCase;
         String response = JSON.toJSONString(resultList, config);
         JSONArray result = JSONArray.parseArray(response);
-//        String ipAddress = ParamUtils.getIpAddr(request);
-//        long ipLong = IpUtils.ipStr2long(ipAddress);
         String message = "ok";
-//        if (ipLong != 0) {
-//            Ip2location ipInfo = ip2locationRepository.findIpInfo(ipLong);
-//            if (ipInfo != null) {
-//                message = ipInfo.getCountryCode();
-//            }
-//        }
         return new Result<>(2000, message, result);
     }
 
@@ -189,14 +187,28 @@ public class ServerController {
     }
 
     @GetMapping("/list")
-    public Result getServerList(@RequestParam Integer type) throws ServiceException {
+    public Result getServerList(@RequestParam String pkgName, @RequestParam Integer type) throws ServiceException {
         Query query = new Query(Maps.newHashMap());
         query.put("type", type);
         query.put("clearCache", true);
         List<Server> list = serverService.query(query);
+        list = serverService.sortByOrder(pkgName, list);
         List<ServerVO> resultList = transform(list, "en");
         return Result.SUCCESS(resultList);
     }
+
+    @GetMapping("/conf")
+    public Result getServerAppConf(@RequestParam String pkgName) throws ServiceException {
+        List<String> resultList = serverService.getOrderByApp(pkgName);
+        return Result.SUCCESS(resultList);
+    }
+    @PostMapping("/conf/update")
+    public Result updateServerAppConf(@RequestParam String pkgName, @RequestBody Map<String, Object> params) throws ServiceException {
+        Query query = new Query(params);
+        serverService.updateOrderByApp(pkgName, query);
+        return Result.SUCCESS();
+    }
+
 
     @PostMapping("/create")
     public Result create(@RequestBody @Valid ServerForm form, BindingResult bindingResult) throws ServiceException {
