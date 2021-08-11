@@ -384,12 +384,18 @@ public class ServerServiceImpl implements ServerService {
     public void updateOrderByApp(String pkgName, Query query) throws ServiceException {
         App app = getAppByPkgName(pkgName);
         String[] order = query.get("order", String[].class);
-        if (order != null && order.length > 0) {
-            String orderStr = Arrays.toString(order);
-            orderStr = orderStr.substring(1, orderStr.length() - 1);
-            orderStr = orderStr.replaceAll(", ", "-");
-            app.setOrder(orderStr);
-            appRepository.save(app);
+
+        if (order != null) {
+            if (order.length == 0) {
+                app.setOrder("");
+                appRepository.save(app);
+            } else {
+                String orderStr = Arrays.toString(order);
+                orderStr = orderStr.substring(1, orderStr.length() - 1);
+                orderStr = orderStr.replaceAll(", ", "-");
+                app.setOrder(orderStr);
+                appRepository.save(app);
+            }
         }
     }
 
