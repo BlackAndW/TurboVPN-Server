@@ -178,6 +178,8 @@ public class ServerServiceImpl implements ServerService {
             if (server.getOnlineConn() > server.getMaxConn()) {
                 server = changeServer(server);
             }
+        } else {
+            throw new ServiceException("serverList is empty!");
         }
 
         if (StringUtils.isEmpty(server.getCert())) {
