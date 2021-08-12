@@ -340,7 +340,7 @@ public class ServerServiceImpl implements ServerService {
     @Async
     synchronized void saveAccountLog(ServerAccount account, Integer appId, Integer deviceId, String ipAddress, String pkgNameReal) {
         AccountLog log = new AccountLog();
-        ipAddress = "192.155.85.6";
+//        ipAddress = "192.155.85.6";
         long ipLong = IpUtils.ipStr2long(ipAddress);
         if (ipLong != 0) {
             Ip2location ipInfo = getIpInfo(ipLong);
