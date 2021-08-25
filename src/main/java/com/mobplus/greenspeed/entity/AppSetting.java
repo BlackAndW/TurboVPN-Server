@@ -28,6 +28,18 @@ public class AppSetting extends AuditorEntity {
     @Column(name = "c_content")
     private String content;
 
+    @Column(name = "n_order")
+    private String order;
+
+    @Column(name = "n_normal_server")
+    private String normalServer;
+
+    @Column(name = "n_vip_server")
+    private String vipServer;
+
+    @Column(name = "n_back_server")
+    private String backServer;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "n_app_id")
     private App app;

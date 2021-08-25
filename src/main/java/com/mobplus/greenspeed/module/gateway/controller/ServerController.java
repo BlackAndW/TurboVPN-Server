@@ -15,10 +15,7 @@ import com.mobplus.greenspeed.module.gateway.form.ServerForm;
 import com.mobplus.greenspeed.module.gateway.vo.ServerProfileVO;
 import com.mobplus.greenspeed.module.gateway.vo.ServerVO;
 import com.mobplus.greenspeed.repository.Ip2locationRepository;
-import com.mobplus.greenspeed.service.AppService;
-import com.mobplus.greenspeed.service.DeviceService;
-import com.mobplus.greenspeed.service.MemberService;
-import com.mobplus.greenspeed.service.ServerService;
+import com.mobplus.greenspeed.service.*;
 import com.mobplus.greenspeed.util.IpUtils;
 import com.yeecloud.meeto.common.exception.ServiceException;
 import com.yeecloud.meeto.common.result.Result;
@@ -69,11 +66,11 @@ public class ServerController {
     @Autowired
     private ServerService serverService;
     @Autowired
+    private ServerRESTService serverRESTService;
+    @Autowired
     private IPParserService ipParserService;
     @Autowired
     private ConfigureService configureService;
-    @Autowired
-    private Ip2locationRepository ip2locationRepository;
 
     @PostMapping("/c0001")
     public Result getServerList(@RequestHeader(Constants.H_PACKGE_NAME) String pkgName,
@@ -111,7 +108,9 @@ public class ServerController {
         query.put("mobileOS", mobileOS);
         List<Server> list = serverService.query(query);
         if (pkgNameReal != null && pkgNameReal.length() > 0) {
-            list = serverService.sortByOrder(pkgNameReal, list);
+            // 根据app配置筛除节点
+            List<Server> serverFilterBySetting = serverRESTService.filterBySetting(pkgNameReal, list);
+            list = serverRESTService.sortByOrder(pkgNameReal, serverFilterBySetting);
         }
         List<ServerVO> resultList = transform(list, locale);
 
@@ -184,55 +183,6 @@ public class ServerController {
             }
         }
         return null;
-    }
-
-    @GetMapping("/list")
-    public Result getServerList(@RequestParam String pkgName, @RequestParam Integer type) throws ServiceException {
-        Query query = new Query(Maps.newHashMap());
-        query.put("type", type);
-        query.put("clearCache", true);
-        List<Server> list = serverService.query(query);
-        list = serverService.sortByOrder(pkgName, list);
-        List<ServerVO> resultList = transform(list, "en");
-        return Result.SUCCESS(resultList);
-    }
-
-    @GetMapping("/conf")
-    public Result getServerAppConf(@RequestParam String pkgName) throws ServiceException {
-        List<String> resultList = serverService.getOrderByApp(pkgName);
-        return Result.SUCCESS(resultList);
-    }
-    @PostMapping("/conf/update")
-    public Result updateServerAppConf(@RequestParam String pkgName, @RequestBody Map<String, Object> params) throws ServiceException {
-        Query query = new Query(params);
-        serverService.updateOrderByApp(pkgName, query);
-        return Result.SUCCESS();
-    }
-
-
-    @PostMapping("/create")
-    public Result create(@RequestBody @Valid ServerForm form, BindingResult bindingResult) throws ServiceException {
-        if (bindingResult.hasErrors()) {
-            String message = String.format("操作失败,详细信息:[%s]。", bindingResult.getFieldError().getDefaultMessage());
-            return Result.FAILURE(message);
-        }
-        serverService.create(form);
-        return Result.SUCCESS();
-    }
-
-    @PostMapping("/update/{id}")
-    public Result update(@PathVariable Integer id, @RequestBody @Valid ServerForm form, BindingResult bindingResult) throws ServiceException {
-        if (bindingResult.hasErrors()) {
-            String message = String.format("操作失败,详细信息:[%s]。", bindingResult.getFieldError().getDefaultMessage());
-            return Result.FAILURE(message);
-        }
-        serverService.update(id, form);
-        return Result.SUCCESS();
-    }
-
-    @PostMapping("/update/online")
-    public void updateOnlineConn(@RequestParam(value = "ip_addr") String ipAddr, @RequestParam(value = "online_conn") Integer onlineConn) throws ServiceException {
-        serverService.updateOnlineConn(ipAddr, onlineConn);
     }
 
     private List<ServerVO> transform(List<Server> list, String locale) {
