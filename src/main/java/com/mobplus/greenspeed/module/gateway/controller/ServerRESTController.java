@@ -1,5 +1,9 @@
 package com.mobplus.greenspeed.module.gateway.controller;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.PropertyNamingStrategy;
+import com.alibaba.fastjson.serializer.SerializeConfig;
 import com.apache.commons.beanutils.NewBeanUtils;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -53,7 +57,12 @@ public class ServerRESTController {
         list = !filterFlag ? serverRESTService.filterBySetting(pkgName, list) : list;
         list = serverRESTService.sortByOrder(pkgName, list);
         List<ServerVO> resultList = convert.convert(list);
-        return Result.SUCCESS(resultList);
+        // 下划线转驼峰，（默认下划线的原因大概率是jar包问题）
+        SerializeConfig config = new SerializeConfig();
+        config.propertyNamingStrategy = PropertyNamingStrategy.CamelCase;
+        String response = JSON.toJSONString(resultList, config);
+        JSONArray result = JSONArray.parseArray(response);
+        return Result.SUCCESS(result);
     }
 
     /***
