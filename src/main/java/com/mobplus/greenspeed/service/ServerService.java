@@ -29,19 +29,5 @@ public interface ServerService {
 
     Server findById(Integer id) throws ServiceException;
 
-    void create(ServerForm form) throws ServiceException;
-
-    void update(Integer id, ServerForm form) throws ServiceException;
-
-    void updateOnlineConn(String ipAddr, Integer onlineConn) throws ServiceException;
-
-//    void delete(Integer[] ids) throws ServiceException;
-
     ServerAccount findServerAccountByServerId(Integer serverId, Integer appId, Integer memberId, Integer devId, String ipAddress, String pkgNameReal) throws ServiceException, IOException;
-
-    List<String> getOrderByApp(String pkgName) throws ServiceException;
-
-    void updateOrderByApp(String pkgName, Query query) throws ServiceException;
-
-    List<Server> sortByOrder(String pkgName, List<Server> serverList) throws ServiceException;
 }

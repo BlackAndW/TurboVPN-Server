@@ -5,6 +5,7 @@ import com.google.common.collect.Lists;
 import com.mobplus.greenspeed.entity.*;
 import com.mobplus.greenspeed.module.gateway.form.ServerForm;
 import com.mobplus.greenspeed.repository.*;
+import com.mobplus.greenspeed.service.ServerRESTService;
 import com.mobplus.greenspeed.service.ServerService;
 import com.mobplus.greenspeed.util.IpUtils;
 import com.querydsl.core.BooleanBuilder;
@@ -56,9 +57,7 @@ public class ServerServiceImpl implements ServerService {
     @Autowired
     private Ip2locationRepository ip2locationRepository;
     @Autowired
-    private AppRepository appRepository;
-
-    private final static String IconBaseUrl = "http://res.turbovpns.com/images/flag_";
+    private ServerRESTService serverRESTService;
 
     @Override
     public List<Server> query(Query query) throws ServiceException {
@@ -126,21 +125,6 @@ public class ServerServiceImpl implements ServerService {
         }
     }
 
-    @Async
-    @Override
-    public synchronized void updateOnlineConn(String ipAddr, Integer onlineConn) throws ServiceException {
-        QServer qServer = QServer.server;
-        Predicate predicate = ExpressionUtils.and(qServer.deleted.eq(Boolean.FALSE), qServer.status.eq(2));
-        predicate = ExpressionUtils.and(predicate, qServer.ipAddr.eq(ipAddr));
-        Server server = serverRepository.findOne(predicate).orElse(null);
-        if (null != server && !server.isDeleted()) {
-            server.setOnlineConn(onlineConn);
-            serverRepository.save(server);
-        } else {
-            log.info("update fail! [{}] is not exist in server list!", ipAddr);
-        }
-    }
-
     @Override
     public ServerAccount findServerAccountByServerId(Integer serverId, Integer appId, Integer memberId, Integer deviceId, String ipAddress, String pkgNameReal) throws IOException, ServiceException {
         return executeFindServerAccountByServerId(serverId, appId, deviceId, ipAddress, pkgNameReal);
@@ -165,7 +149,9 @@ public class ServerServiceImpl implements ServerService {
 
         // 自动连接模式，按顺序获取节点，满载依次递进
         if (serverList.getContent().size() > 1) {
-            List<Server> serverListByOrder = sortByOrder(pkgNameReal, serverList.getContent());
+            // 根据app配置筛除节点
+            List<Server> serverFilterBySetting = serverRESTService.filterBySetting(pkgNameReal, serverList.getContent());
+            List<Server> serverListByOrder = serverRESTService.sortByOrder(pkgNameReal, serverFilterBySetting);
             for (Server serverItem : serverListByOrder) {
                 server = serverItem;
                 if (server.getOnlineConn() < server.getMaxConn()) {
@@ -211,36 +197,6 @@ public class ServerServiceImpl implements ServerService {
     @Override
     public Server findById(Integer id) throws ServiceException {
         return null;
-    }
-
-    @Override
-    @Transactional(rollbackFor = Throwable.class)
-    public void create(ServerForm form) throws ServiceException {
-        clearCache();
-        Server server = new Server();
-        NewBeanUtils.copyProperties(server, form, true);
-        server.setIconUrl(IconBaseUrl + form.getCountryCode().toLowerCase() + ".png");
-        try {
-            serverRepository.save(server);
-        } catch (Throwable e){
-            throw new ServiceException(e);
-        }
-    }
-
-    @Override
-    @Transactional(rollbackFor = Throwable.class)
-    public void update(Integer id, ServerForm form) throws ServiceException {
-        try {
-            clearCache();
-            Server server = serverRepository.findById(id).orElse(null);
-            if (null != server && !server.isDeleted()) {
-                NewBeanUtils.copyProperties(server, form, true);
-                server.setIconUrl(IconBaseUrl + form.getCountryCode().toLowerCase() + ".png");
-                serverRepository.save(server);
-            }
-        } catch (Throwable e){
-            throw new ServiceException(e);
-        }
     }
 
     @Override
@@ -371,75 +327,4 @@ public class ServerServiceImpl implements ServerService {
         return ip2locationRepository.findIpInfo(ipLong);
     }
 
-    @Override
-    public List<String> getOrderByApp(String pkgName) throws ServiceException {
-        App app = getAppByPkgName(pkgName);
-        if (app.getOrder() == null || app.getOrder().length() == 0) {
-            return new ArrayList<>();
-        }
-        String order = app.getOrder();
-        return Arrays.asList(order.split("-"));
-    }
-
-    @Override
-    @Transactional(rollbackFor = Throwable.class)
-    public void updateOrderByApp(String pkgName, Query query) throws ServiceException {
-        App app = getAppByPkgName(pkgName);
-        String[] order = query.get("order", String[].class);
-
-        if (order != null) {
-            if (order.length == 0) {
-                app.setOrder("");
-                appRepository.save(app);
-            } else {
-                String orderStr = Arrays.toString(order);
-                orderStr = orderStr.substring(1, orderStr.length() - 1);
-                orderStr = orderStr.replaceAll(", ", "-");
-                app.setOrder(orderStr);
-                appRepository.save(app);
-            }
-        }
-    }
-
-    /***
-     * 将列表按app内配置的国家顺序排序
-     * @param pkgName
-     * @param serverList
-     * @return
-     * @throws ServiceException
-     */
-    @Override
-    public List<Server> sortByOrder(String pkgName, List<Server> serverList) throws ServiceException {
-        App app = getAppByPkgName(pkgName);
-        if (app.getOrder() == null || app.getOrder().length() == 0) {
-            log.info("order config is empty");
-            return serverList;
-        }
-        List<String> orders = Arrays.asList(app.getOrder().split("-"));
-        List<Server> newServerList = new ArrayList<>();
-        for (String order : orders) {
-            for (Server server : serverList) {
-                if (server.getCountryCode().equals(order)) {
-                    newServerList.add(server);
-                }
-            }
-        }
-        // 未排序的部分按默认排序添加
-        if (serverList.size() > newServerList.size()) {
-            for (Server server : serverList) {
-                if (!orders.contains(server.getCountryCode())) {
-                    newServerList.add(server);
-                }
-            }
-        }
-        return newServerList;
-    }
-
-    private App getAppByPkgName(String pkgName) throws ServiceException{
-        App app = appRepository.findTopByPkgName(pkgName);
-        if (app == null) {
-            throw new ServiceException("app is not exist!");
-        }
-        return app;
-    }
 }

@@ -19,12 +19,12 @@ import javax.persistence.*;
 @Table(name = "t_server")
 public class Server extends AuditorEntity {
 
-    public static interface State {
+    public interface State {
         int SUSPEND = 1;
         int RUNNING = 2;
     }
 
-    public static interface Type {
+    public interface Type {
         int NORMAL = 0;
         int VIP = 1;
         int POOL = 2;   // 备用连接节点
