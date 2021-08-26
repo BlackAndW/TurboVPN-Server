@@ -203,11 +203,13 @@ public class ServerRESTServiceImpl implements ServerRESTService {
                                     vo.getVipServerList()),
                 vo.getBackServerList());
         if (settingServer != null && settingServer.length > 0) {
-            for (int i = 0; i < serverList.size(); i++) {
-                if (!ArrayUtils.contains(settingServer, serverList.get(i).getId())) {
-                    serverList.remove(i--);
+            List<Server> servers = new ArrayList<>();
+            for (Server server : serverList) {
+                if (ArrayUtils.contains(settingServer, server.getId())) {
+                    servers.add(server);
                 }
             }
+            return servers;
         }
         return serverList;
     }
@@ -255,7 +257,7 @@ public class ServerRESTServiceImpl implements ServerRESTService {
     private App getAppByPkgName(String pkgName) throws ServiceException{
         App app = appRepository.findTopByPkgName(pkgName);
         if (app == null) {
-            throw new ServiceException("app is not exist!");
+            throw new ServiceException(pkgName + " is not exist!");
         }
         return app;
     }
