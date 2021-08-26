@@ -76,7 +76,7 @@ public class ServerController {
     public Result getServerList(@RequestHeader(Constants.H_PACKGE_NAME) String pkgName,
                                 @RequestHeader(Constants.H_LOCALE) String locale,
                                 @RequestHeader(value = Constants.H_MOIBILE_OS, defaultValue = "android") String mobileOS,
-                                @RequestHeader(value = Constants.H_PACKGE_NAME_REAL, defaultValue = "") String pkgNameReal) throws ServiceException {
+                                @RequestHeader(value = Constants.H_PACKGE_NAME_REAL, defaultValue = "com.freetech.turbovpn") String pkgNameReal) throws ServiceException {
 
         return getResultList(pkgName, locale, mobileOS, Server.Type.NORMAL, pkgNameReal);
     }
@@ -86,7 +86,7 @@ public class ServerController {
                                     @RequestHeader(Constants.H_LOCALE) String locale,
                                    @RequestHeader(value = Constants.H_MOIBILE_OS, defaultValue = "android") String mobileOS) throws ServiceException {
 
-        return getResultList(pkgName, locale, mobileOS, Server.Type.VIP, "");
+        return getResultList(pkgName, locale, mobileOS, Server.Type.VIP, "com.freetech.turbovpn");
     }
 
     /**
@@ -150,7 +150,7 @@ public class ServerController {
                 member != null ? member.getId() : 0,
                 device != null ? device.getId() : 0,
                 ipAddress,
-                pkgNameReal != null ? pkgNameReal : ""
+                pkgNameReal != null ? pkgNameReal : "com.freetech.turbovpn"
         );
         if (account != null) {
             ServerProfileVO profile = convert.convert(account);
