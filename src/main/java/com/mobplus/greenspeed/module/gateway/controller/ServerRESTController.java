@@ -2,6 +2,7 @@ package com.mobplus.greenspeed.module.gateway.controller;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.PropertyNamingStrategy;
 import com.alibaba.fastjson.serializer.SerializeConfig;
 import com.apache.commons.beanutils.NewBeanUtils;
@@ -77,8 +78,13 @@ public class ServerRESTController {
     }
 
     @GetMapping("/setting")
-    public SettingVO getServerAppSetting(@RequestParam String pkgName) throws ServiceException {
-        return serverRESTService.getSettingByApp(pkgName);
+    public JSONObject getServerAppSetting(@RequestParam String pkgName) throws ServiceException {
+        SettingVO resultVO = serverRESTService.getSettingByApp(pkgName);
+        // 下划线转驼峰，（默认下划线的原因大概率是jar包问题）
+        SerializeConfig config = new SerializeConfig();
+        config.propertyNamingStrategy = PropertyNamingStrategy.CamelCase;
+        String response = JSON.toJSONString(resultVO, config);
+        return JSON.parseObject(response);
     }
     @PostMapping("/setting/update")
     public Result updateServerAppSetting(@RequestParam String pkgName, @RequestBody Map<String, Object> params) throws ServiceException {
