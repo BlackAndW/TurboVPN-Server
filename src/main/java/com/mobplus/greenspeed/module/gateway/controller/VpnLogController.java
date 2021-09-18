@@ -1,35 +1,26 @@
 package com.mobplus.greenspeed.module.gateway.controller;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson.PropertyNamingStrategy;
-import com.alibaba.fastjson.serializer.SerializeConfig;
 import com.apache.commons.beanutils.NewBeanUtils;
 import com.google.common.collect.Maps;
 import com.mobplus.greenspeed.entity.AccountLog;
-import com.mobplus.greenspeed.entity.Server;
+import com.mobplus.greenspeed.entity.ErrorLog;
 import com.mobplus.greenspeed.module.gateway.vo.AccountLogVO;
-import com.mobplus.greenspeed.module.gateway.vo.ServerVO;
+import com.mobplus.greenspeed.module.gateway.vo.ErrorLogVO;
+import com.mobplus.greenspeed.service.ServerRESTService;
 import com.mobplus.greenspeed.service.ServerService;
 import com.mobplus.greenspeed.util.IpUtils;
 import com.mobplus.greenspeed.util.ProcessUtils;
 import com.yeecloud.meeto.common.exception.ServiceException;
-import com.yeecloud.meeto.common.result.Result;
 import com.yeecloud.meeto.common.util.DateUtils;
 import com.yeecloud.meeto.common.util.PageInfo;
 import com.yeecloud.meeto.common.util.Query;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
-import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -42,7 +33,7 @@ import java.util.*;
 @Slf4j
 @RestController
 @RequestMapping("/app/api/v1/vpn")
-public class AccountLogController {
+public class VpnLogController {
 
     @Value("${spring.datasource.password}")
     private String password;
@@ -50,16 +41,41 @@ public class AccountLogController {
     @Autowired
     private ServerService serverService;
 
+    @Autowired
+    private ServerRESTService serverRESTService;
+
     @GetMapping("/list")
-    public JSONObject getServerList(@RequestParam Map<String, Object> params) throws ServiceException, ParseException {
+    public PageInfo<AccountLogVO> getServerList(@RequestParam Map<String, Object> params) throws ServiceException, ParseException {
         Query query = new Query(Maps.newHashMap(params));
         Page<AccountLog> list = serverService.queryLog(query);
-        PageInfo<AccountLogVO> resultList = convert(list);
-        // 下划线转驼峰，（默认下划线的原因未知）
-        SerializeConfig config = new SerializeConfig();
-        config.propertyNamingStrategy = PropertyNamingStrategy.CamelCase;
-        String response = JSON.toJSONString(resultList, config);
-        return JSON.parseObject(response);
+        return convert(list);
+    }
+
+    private PageInfo<AccountLogVO> convert(Page<AccountLog> result) {
+        List<AccountLogVO> resultList = new ArrayList<>();
+        result.getContent().forEach( item -> {
+            AccountLogVO accountLogVO = new AccountLogVO();
+            NewBeanUtils.copyProperties(accountLogVO, item);
+            accountLogVO.setIp(IpUtils.ipLong2Str(item.getUserIp()));
+            resultList.add(accountLogVO);
+        });
+        return new PageInfo<>(result.getNumber() + 1, result.getSize(), (int) result.getTotalElements(), resultList);
+    }
+
+    @GetMapping("/list/errorLog")
+    public PageInfo<ErrorLogVO> getErrorLog(@RequestParam Map<String, Object> params) throws ParseException {
+        Page<ErrorLog> result = serverRESTService.queryErrorLog(new Query(params));
+        return convertErr(result);
+    }
+
+    private PageInfo<ErrorLogVO> convertErr(Page<ErrorLog> result) {
+        List<ErrorLogVO> resultList = new ArrayList<>();
+        result.getContent().forEach( item -> {
+            ErrorLogVO errorLogVO = new ErrorLogVO();
+            NewBeanUtils.copyProperties(errorLogVO, item);
+            resultList.add(errorLogVO);
+        });
+        return new PageInfo<>(result.getNumber() + 1, result.getSize(), (int) result.getTotalElements(), resultList);
     }
 
     @GetMapping("data2excel")
@@ -107,16 +123,5 @@ public class AccountLogController {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("file", filePath+fileName);
         return jsonObject;
-    }
-
-    private PageInfo<AccountLogVO> convert(Page<AccountLog> result) {
-        List<AccountLogVO> resultList = new ArrayList<>();
-        result.getContent().forEach( item -> {
-            AccountLogVO accountLogVO = new AccountLogVO();
-            NewBeanUtils.copyProperties(accountLogVO, item);
-            accountLogVO.setIp(IpUtils.ipLong2Str(item.getUserIp()));
-            resultList.add(accountLogVO);
-        });
-        return new PageInfo<>(result.getNumber() + 1, result.getSize(), (int) result.getTotalElements(), resultList);
     }
 }
