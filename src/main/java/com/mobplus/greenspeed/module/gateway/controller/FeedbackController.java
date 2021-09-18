@@ -13,18 +13,15 @@ import com.yeecloud.meeto.common.exception.ServiceException;
 import com.yeecloud.meeto.common.result.Result;
 import com.yeecloud.meeto.common.result.ResultCode;
 import com.yeecloud.meeto.common.util.StringUtils;
+import io.github.yedaxia.apidocs.ApiDoc;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * Title
+ * 错误日志和反馈
  *
- * Date: 2020-09-18 14:49:14
- * Copyright (c) 2019-2099 YeeCloud
- *
- * @author ybbk
- * @version 1.0.01
+ * @author Leonard
  */
 @Slf4j
 @RestController
@@ -64,6 +61,7 @@ public class FeedbackController {
      * @return
      * @throws ServiceException
      */
+    @ApiDoc
     @PostMapping("/c0002")
     public Result<String> postErrLog(@RequestBody ErrorLogForm form) throws ServiceException {
         String result = errorLogService.insertErrorLog(form);
