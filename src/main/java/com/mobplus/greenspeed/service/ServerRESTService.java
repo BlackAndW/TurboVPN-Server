@@ -1,12 +1,15 @@
 package com.mobplus.greenspeed.service;
 
 import com.mobplus.greenspeed.entity.AppSetting;
+import com.mobplus.greenspeed.entity.ErrorLog;
 import com.mobplus.greenspeed.entity.Server;
 import com.mobplus.greenspeed.module.gateway.form.ServerForm;
 import com.mobplus.greenspeed.module.gateway.vo.SettingVO;
 import com.yeecloud.meeto.common.exception.ServiceException;
 import com.yeecloud.meeto.common.util.Query;
+import org.springframework.data.domain.Page;
 
+import java.text.ParseException;
 import java.util.List;
 
 /**
@@ -28,5 +31,7 @@ public interface ServerRESTService {
     List<Server> filterBySetting(String pkgName, List<Server> serverList) throws ServiceException;
 
     List<Server> sortByOrder(String pkgName, List<Server> serverList) throws ServiceException;
+
+    Page<ErrorLog> queryErrorLog(Query query) throws ParseException;
 
 }

@@ -1,30 +1,29 @@
 package com.mobplus.greenspeed.module.gateway.controller;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.PropertyNamingStrategy;
-import com.alibaba.fastjson.serializer.SerializeConfig;
 import com.apache.commons.beanutils.NewBeanUtils;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.mobplus.greenspeed.entity.AppSetting;
+import com.mobplus.greenspeed.entity.ErrorLog;
 import com.mobplus.greenspeed.entity.Server;
 import com.mobplus.greenspeed.module.gateway.convert.ServerConvert;
 import com.mobplus.greenspeed.module.gateway.form.ServerForm;
+import com.mobplus.greenspeed.module.gateway.vo.ErrorLogVO;
 import com.mobplus.greenspeed.module.gateway.vo.ServerVO;
 import com.mobplus.greenspeed.module.gateway.vo.SettingVO;
-import com.mobplus.greenspeed.service.AppService;
 import com.mobplus.greenspeed.service.ServerRESTService;
 import com.mobplus.greenspeed.service.ServerService;
 import com.yeecloud.meeto.common.exception.ServiceException;
 import com.yeecloud.meeto.common.result.Result;
+import com.yeecloud.meeto.common.util.PageInfo;
 import com.yeecloud.meeto.common.util.Query;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -57,12 +56,7 @@ public class ServerRESTController {
         list = !filterFlag ? serverRESTService.filterBySetting(pkgName, list) : list;
         list = serverRESTService.sortByOrder(pkgName, list);
         List<ServerVO> resultList = convert.convert(list);
-        // 下划线转驼峰，（默认下划线的原因大概率是jar包问题）
-        SerializeConfig config = new SerializeConfig();
-        config.propertyNamingStrategy = PropertyNamingStrategy.CamelCase;
-        String response = JSON.toJSONString(resultList, config);
-        JSONArray result = JSONArray.parseArray(response);
-        return Result.SUCCESS(result);
+        return Result.SUCCESS(resultList);
     }
 
     /***
@@ -79,6 +73,7 @@ public class ServerRESTController {
     @GetMapping("/setting")
     public SettingVO getServerAppSetting(@RequestParam String pkgName) throws ServiceException {
         return serverRESTService.getSettingByApp(pkgName);
+
     }
     @PostMapping("/setting/update")
     public Result updateServerAppSetting(@RequestParam String pkgName, @RequestBody Map<String, Object> params) throws ServiceException {
@@ -112,5 +107,4 @@ public class ServerRESTController {
     public void updateOnlineConn(@RequestParam(value = "ip_addr") String ipAddr, @RequestParam(value = "online_conn") Integer onlineConn) throws ServiceException {
         serverRESTService.updateOnlineConn(ipAddr, onlineConn);
     }
-
 }

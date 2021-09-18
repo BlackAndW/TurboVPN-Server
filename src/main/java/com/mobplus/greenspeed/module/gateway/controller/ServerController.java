@@ -1,22 +1,14 @@
 package com.mobplus.greenspeed.module.gateway.controller;
 
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson.PropertyNamingStrategy;
-import com.alibaba.fastjson.serializer.SerializeConfig;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mobplus.greenspeed.Constants;
 import com.mobplus.greenspeed.entity.*;
 import com.mobplus.greenspeed.module.gateway.convert.ServerConvert;
-import com.mobplus.greenspeed.module.gateway.form.ServerForm;
 import com.mobplus.greenspeed.module.gateway.vo.ServerProfileVO;
 import com.mobplus.greenspeed.module.gateway.vo.ServerVO;
-import com.mobplus.greenspeed.repository.Ip2locationRepository;
 import com.mobplus.greenspeed.service.*;
-import com.mobplus.greenspeed.util.IpUtils;
 import com.yeecloud.meeto.common.exception.ServiceException;
 import com.yeecloud.meeto.common.result.Result;
 import com.yeecloud.meeto.common.result.ResultCode;
@@ -28,14 +20,11 @@ import com.yeecloud.meeto.ipparser.IPInfo;
 import com.yeecloud.meeto.ipparser.service.IPParserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.validation.Valid;
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Title
@@ -114,13 +103,9 @@ public class ServerController {
         }
         List<ServerVO> resultList = transform(list, locale);
 
-        // 下划线转驼峰，（默认下划线的原因大概率是jar包问题）
-        SerializeConfig config = new SerializeConfig();
-        config.propertyNamingStrategy = PropertyNamingStrategy.CamelCase;
-        String response = JSON.toJSONString(resultList, config);
-        JSONArray result = JSONArray.parseArray(response);
+//        JSONArray result = DataUtils.snake2Camel(resultList);
         String message = "ok";
-        return new Result<>(2000, message, result);
+        return new Result<>(2000, message, resultList);
     }
 
     @PostMapping("/c0001/{id}")

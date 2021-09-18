@@ -39,7 +39,7 @@ public class WebConfiguration implements WebMvcConfigurer {
         fastJsonConfig.setDateFormat(Constants.DATE_FORMAT);
 
         SerializeConfig serializeConfig = new SerializeConfig();
-        serializeConfig.propertyNamingStrategy = PropertyNamingStrategy.SnakeCase;
+        serializeConfig.propertyNamingStrategy = PropertyNamingStrategy.CamelCase;
         fastJsonConfig.setSerializeConfig(serializeConfig);
 
         List<MediaType> fastMediaTypes = Lists.newArrayList();

@@ -1,13 +1,11 @@
 package com.mobplus.greenspeed.service.impl;
 
 import com.apache.commons.beanutils.NewBeanUtils;
-import com.mobplus.greenspeed.entity.App;
-import com.mobplus.greenspeed.entity.AppSetting;
-import com.mobplus.greenspeed.entity.QServer;
-import com.mobplus.greenspeed.entity.Server;
+import com.mobplus.greenspeed.entity.*;
 import com.mobplus.greenspeed.module.gateway.form.ServerForm;
 import com.mobplus.greenspeed.module.gateway.vo.SettingVO;
 import com.mobplus.greenspeed.repository.AppRepository;
+import com.mobplus.greenspeed.repository.ErrorLogRepository;
 import com.mobplus.greenspeed.repository.ServerRepository;
 import com.mobplus.greenspeed.service.ServerRESTService;
 import com.querydsl.core.types.ExpressionUtils;
@@ -19,11 +17,16 @@ import org.apache.commons.lang.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.lang.reflect.Array;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -45,6 +48,9 @@ public class ServerRESTServiceImpl implements ServerRESTService {
 
     @Autowired
     private AppRepository appRepository;
+
+    @Autowired
+    private ErrorLogRepository errorLogRepository;
 
     private final static String IconBaseUrl = "http://res.turbovpns.com/images/flag_";
 
@@ -260,5 +266,29 @@ public class ServerRESTServiceImpl implements ServerRESTService {
             throw new ServiceException(pkgName + " is not exist!");
         }
         return app;
+    }
+
+    @Override
+    public Page<ErrorLog> queryErrorLog(Query query) throws ParseException {
+        QErrorLog qErrorLog = QErrorLog.errorLog;
+        Predicate predicate = qErrorLog.deleted.eq(false);
+        String pkgName = query.get("pkgName", String.class);
+        App app = appRepository.findTopByPkgName(pkgName);
+        if (app == null) {
+            log.info("app is not exist!, pkgName is {}", pkgName);
+            return null;
+        }
+        predicate = ExpressionUtils.and(predicate, qErrorLog.app.id.eq(app.getId()));
+        String startTimeStr = query.get("startTimeStr", String.class);
+        String endTimeStr = query.get("endTimeStr", String.class);
+        if (startTimeStr != null && endTimeStr != null && startTimeStr.length() > 0 && endTimeStr.length() > 0) {
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            long startTime = simpleDateFormat.parse(startTimeStr).getTime();
+            long endTime = simpleDateFormat.parse(endTimeStr).getTime();
+            predicate = ExpressionUtils.and(predicate, qErrorLog.createdAt.between(startTime, endTime));
+        }
+        Sort sort = Sort.by(new Sort.Order(Sort.Direction.DESC, "createdAt"));
+        PageRequest pagRequest = PageRequest.of(query.getPageNo() - 1, query.getPageSize(), sort);
+        return errorLogRepository.findAll(predicate, pagRequest);
     }
 }
