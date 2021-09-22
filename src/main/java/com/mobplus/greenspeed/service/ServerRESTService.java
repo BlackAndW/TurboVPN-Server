@@ -34,4 +34,5 @@ public interface ServerRESTService {
 
     Page<ErrorLog> queryErrorLog(Query query) throws ParseException;
 
+    void createApp(Query query) throws ServiceException;
 }
