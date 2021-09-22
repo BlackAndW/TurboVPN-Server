@@ -3,14 +3,17 @@ package com.mobplus.greenspeed.module.gateway.controller;
 import com.apache.commons.beanutils.NewBeanUtils;
 import com.google.common.collect.Maps;
 import com.mobplus.greenspeed.entity.ErrorLog;
+import com.mobplus.greenspeed.entity.Ip2location;
 import com.mobplus.greenspeed.entity.Server;
 import com.mobplus.greenspeed.module.gateway.convert.ServerConvert;
 import com.mobplus.greenspeed.module.gateway.form.ServerForm;
 import com.mobplus.greenspeed.module.gateway.vo.ErrorLogVO;
 import com.mobplus.greenspeed.module.gateway.vo.ServerVO;
 import com.mobplus.greenspeed.module.gateway.vo.SettingVO;
+import com.mobplus.greenspeed.repository.Ip2locationRepository;
 import com.mobplus.greenspeed.service.ServerRESTService;
 import com.mobplus.greenspeed.service.ServerService;
+import com.mobplus.greenspeed.util.IpUtils;
 import com.yeecloud.meeto.common.exception.ServiceException;
 import com.yeecloud.meeto.common.result.Result;
 import com.yeecloud.meeto.common.util.PageInfo;
@@ -45,6 +48,9 @@ public class ServerRESTController {
 
     @Autowired
     private ServerRESTService serverRESTService;
+
+    @Autowired
+    private Ip2locationRepository ip2locationRepository;
 
     @GetMapping("/list")
     public Result getServerList(@RequestParam String pkgName, @RequestParam Integer type, boolean filterFlag) throws ServiceException {
@@ -106,5 +112,16 @@ public class ServerRESTController {
     @PostMapping("/update/online")
     public void updateOnlineConn(@RequestParam(value = "ip_addr") String ipAddr, @RequestParam(value = "online_conn") Integer onlineConn) throws ServiceException {
         serverRESTService.updateOnlineConn(ipAddr, onlineConn);
+    }
+
+    @PostMapping("/create/app")
+    public void createApp(@RequestBody Map<String, Object> params) throws ServiceException {
+        serverRESTService.createApp(new Query(params));
+    }
+
+    @PostMapping("/query/ip")
+    public String queryIp(@RequestBody Map<String, String> params) throws ServiceException {
+        Ip2location location = ip2locationRepository.findIpInfo(IpUtils.ipStr2long(params.get("ip")));
+        return location.getCountryCode() + " / " + location.getCity();
     }
 }

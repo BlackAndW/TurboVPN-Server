@@ -9,9 +9,12 @@ import lombok.Data;
 @Data
 public class ErrorLogForm {
 
+    /** 真实包名 */
     private String pkgName;
 
+    /** 版本号 */
     private String pkgVersion;
 
+    /** 错误信息 */
     private String errMsg;
 }

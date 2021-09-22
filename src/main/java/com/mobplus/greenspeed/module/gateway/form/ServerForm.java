@@ -14,11 +14,11 @@ import javax.validation.constraints.NotNull;
 @Data
 public class ServerForm {
 
-    @JSONField(name = "serverName")
+    @JSONField(name = "b02")
     @NotBlank(message = "请输入节点名称")
     private String name;
 
-    @JSONField(name = "b02")
+    @JSONField(name = "b02_en")
     private String nameEn;
 
     private String summary;

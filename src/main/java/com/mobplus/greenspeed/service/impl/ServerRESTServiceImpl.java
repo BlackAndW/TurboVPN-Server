@@ -291,4 +291,17 @@ public class ServerRESTServiceImpl implements ServerRESTService {
         PageRequest pagRequest = PageRequest.of(query.getPageNo() - 1, query.getPageSize(), sort);
         return errorLogRepository.findAll(predicate, pagRequest);
     }
+
+    @Override
+    public void createApp(Query query) throws ServiceException {
+        String appName = query.get("name", String.class);
+        String pkgName = query.get("pkgName", String.class);
+        App app = new App();
+        if (appName != null && appName.length() > 0 && pkgName != null && pkgName.length() > 0) {
+            app.setAppName(appName);
+            app.setPkgName(pkgName);
+            app.setStatus(0);
+            appRepository.save(app);
+        }
+    }
 }
