@@ -137,8 +137,7 @@ public class ServerServiceImpl implements ServerService {
             predicateServer = ExpressionUtils.and(predicateServer, qServer.id.eq(serverId));
         } else {
             // 新版本若参数是0，按顺序连接
-            predicateServer = ExpressionUtils.and(predicateServer, qServer.type.eq(Server.Type.NORMAL));
-            predicateServer = ExpressionUtils.or(predicateServer, qServer.type.eq(Server.Type.POOL));
+            predicateServer = ExpressionUtils.and(predicateServer, qServer.type.in(Server.Type.NORMAL, Server.Type.POOL));
         }
 
         Sort sort = Sort.by(new Sort.Order(Sort.Direction.ASC, "ratio"), new Sort.Order(Sort.Direction.ASC, "name"));
