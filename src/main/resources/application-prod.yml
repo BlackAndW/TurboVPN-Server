@@ -16,8 +16,8 @@ spring:
     force: true
   datasource:
     url: jdbc:mysql://db.runspeeds.com:3306/green_speed?serverTimezone=UTC&useUnicode=true&characterEncoding=utf8&useSSL=false
-    username: root
-    password: 123456
+    username: mobplus
+    password: mobplus-mysql-pwd.!
     driverClassName: com.mysql.cj.jdbc.Driver
     type: com.alibaba.druid.pool.DruidDataSource
     initialSize: 10

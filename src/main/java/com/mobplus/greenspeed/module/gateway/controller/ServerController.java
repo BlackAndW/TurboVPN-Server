@@ -9,8 +9,8 @@ import com.mobplus.greenspeed.module.gateway.convert.ServerConvert;
 import com.mobplus.greenspeed.module.gateway.vo.ServerProfileVO;
 import com.mobplus.greenspeed.module.gateway.vo.ServerVO;
 import com.mobplus.greenspeed.service.*;
+import com.mobplus.greenspeed.util.Result;
 import com.yeecloud.meeto.common.exception.ServiceException;
-import com.yeecloud.meeto.common.result.Result;
 import com.yeecloud.meeto.common.result.ResultCode;
 import com.yeecloud.meeto.common.util.ParamUtils;
 import com.yeecloud.meeto.common.util.Query;
@@ -18,6 +18,7 @@ import com.yeecloud.meeto.common.util.StringUtils;
 import com.yeecloud.meeto.configure.service.ConfigureService;
 import com.yeecloud.meeto.ipparser.IPInfo;
 import com.yeecloud.meeto.ipparser.service.IPParserService;
+import io.github.yedaxia.apidocs.ApiDoc;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -27,13 +28,8 @@ import java.io.IOException;
 import java.util.List;
 
 /**
- * Title
- *
- * Date: 2020-09-17 16:12:33
- * Copyright (c) 2019-2099 YeeCloud
- *
- * @author ybbk
- * @version 1.0.01
+ *  VPN节点管理
+ * @author Leonard
  */
 @Slf4j
 @RestController
@@ -61,32 +57,52 @@ public class ServerController {
     @Autowired
     private ConfigureService configureService;
 
+    /**
+     * 获取普通节点列表
+     * @param pkgName 【header参数-H001】假包名
+     * @param locale    【header参数-H005】 地区名
+     * @param pkgNameReal   【header参数-H006】 真实包名，默认等于假包名
+     * @param mobileOS  【header参数-mobileOS】手机系统 传android(默认)或ios
+     * @return
+     * @throws ServiceException
+     */
+    @ApiDoc
     @PostMapping("/c0001")
-    public Result getServerList(@RequestHeader(Constants.H_PACKGE_NAME) String pkgName,
-                                @RequestHeader(Constants.H_LOCALE) String locale,
-                                @RequestHeader(value = Constants.H_MOIBILE_OS, defaultValue = "android") String mobileOS,
-                                @RequestHeader(value = Constants.H_PACKGE_NAME_REAL, defaultValue = "com.freetech.turbovpn") String pkgNameReal) throws ServiceException {
+    public Result<List<ServerVO>> getServerList(@RequestHeader(value = Constants.H_PACKGE_NAME, defaultValue = "com.freetech.turbovpn") String pkgName,
+                                                @RequestHeader(value = Constants.H_LOCALE, defaultValue = "") String locale,
+                                                @RequestHeader(value = Constants.H_MOIBILE_OS, defaultValue = "android") String mobileOS,
+                                                @RequestHeader(value = Constants.H_PACKGE_NAME_REAL, defaultValue = "com.freetech.turbovpn") String pkgNameReal) throws ServiceException {
 
         return getResultList(pkgName, locale, mobileOS, Server.Type.NORMAL, pkgNameReal);
     }
 
+    /**
+     *
+     * 获取VIP节点列表
+     * @param pkgName 【header参数-H001】假包名
+     * @param locale    【header参数-H005】 地区名
+     * @param pkgNameReal   【header参数-H006】 真实包名，默认等于假包名
+     * @param mobileOS  【header参数-mobileOS】手机系统 传android(默认)或ios
+     * @return
+     * @throws ServiceException
+     */
+    @ApiDoc
     @PostMapping("/vip")
-    public Result getVipServerList(@RequestHeader(Constants.H_PACKGE_NAME) String pkgName,
-                                    @RequestHeader(Constants.H_LOCALE) String locale,
-                                   @RequestHeader(value = Constants.H_MOIBILE_OS, defaultValue = "android") String mobileOS) throws ServiceException {
+    public Result<List<ServerVO>> getVipServerList(@RequestHeader(value = Constants.H_PACKGE_NAME, defaultValue = "com.freetech.turbovpn") String pkgName,
+                                    @RequestHeader(value = Constants.H_LOCALE, defaultValue = "") String locale,
+                                   @RequestHeader(value = Constants.H_MOIBILE_OS, defaultValue = "android") String mobileOS,
+                                   @RequestHeader(value = Constants.H_PACKGE_NAME_REAL, defaultValue = "com.freetech.turbovpn") String pkgNameReal) throws ServiceException {
 
-        return getResultList(pkgName, locale, mobileOS, Server.Type.VIP, "com.freetech.turbovpn");
+        return getResultList(pkgName, locale, mobileOS, Server.Type.VIP, pkgNameReal);
     }
 
     /**
      *
-     * @param pkgName   应用包名
-     * @param locale    地域检测
      * @param type      节点类型
      * @return
      * @throws ServiceException
      */
-    private Result getResultList(String pkgName, String locale, String mobileOS, Integer type, String pkgNameReal) throws ServiceException{
+    private Result<List<ServerVO>> getResultList(String pkgName, String locale, String mobileOS, Integer type, String pkgNameReal) throws ServiceException{
         Integer appId = getAppId(pkgName);
         if (appId == null) {
             return Result.FAILURE(ResultCode.PARAM_ERROR);
@@ -108,21 +124,35 @@ public class ServerController {
         return new Result<>(2000, message, resultList);
     }
 
+    /**
+     * 获取自动/手动连接节点信息
+     * @param pkgName 【header参数-H001】假包名
+     * @param token     【header参数-H002】token
+     * @param devId     【header参数-H003】设备id
+     * @param imei      【header参数-H004】imei
+     * @param locale    【header参数-H005】地区名
+     * @param serverId 【url参数】节点id,0代表自动连接
+     * @return
+     * @throws ServiceException
+     * @throws IOException
+     */
+    @ApiDoc
     @PostMapping("/c0001/{id}")
-    public Result<ServerProfileVO> getServerProfile(@RequestHeader(Constants.H_PACKGE_NAME) String pkgName,
-                                                    @RequestHeader(Constants.H_LOCALE) String locale,
-                                                    @RequestHeader(Constants.H_TOKEN) String token,
-                                                    @RequestHeader(Constants.H_UUID) String devId,
-                                                    @RequestHeader(Constants.H_IMEI) String imei,
-                                                    @PathVariable("id") Integer serverId) throws ServiceException, IOException {
-        log.info("IpAddr:[{}] PKG:[{}] TOKEN:[{}] UUID:[{}] IMEI:[{}] RequestServer:[{}]", ParamUtils.getIpAddr(request), pkgName, token, devId, imei, serverId);
+    public Result<ServerProfileVO> getServerProfile(@RequestHeader(value = Constants.H_PACKGE_NAME, defaultValue="com.freetech.turbovpn") String pkgName,
+                                                    @RequestHeader(value = Constants.H_LOCALE, defaultValue="") String locale,
+                                                    @RequestHeader(value = Constants.H_TOKEN, defaultValue="") String token,
+                                                    @RequestHeader(value = Constants.H_UUID, defaultValue="") String devId,
+                                                    @RequestHeader(value = Constants.H_IMEI, defaultValue="") String imei,
+                                                    @RequestHeader(value = Constants.H_PACKGE_NAME_REAL, defaultValue = "com.freetech.turbovpn") String pkgNameReal,
+                                                    @PathVariable(value = "id", required = true) Integer serverId) throws ServiceException, IOException {
+        System.out.println(request);
+        String ipAddress = request == null ? ParamUtils.getIpAddr(request) : "";
+        log.info("IpAddr:[{}] PKG:[{}] TOKEN:[{}] UUID:[{}] IMEI:[{}] RequestServer:[{}]", ipAddress, pkgName, token, devId, imei, serverId);
         Integer appId = getAppId(pkgName);
         if (appId == null) {
             log.info("Cann't found Pkg:[{}]", pkgName);
             return Result.FAILURE(ResultCode.PARAM_ERROR);
         }
-        String ipAddress = ParamUtils.getIpAddr(request);
-        String pkgNameReal = request.getHeader("H006");
         boolean limit = isNeedRegionLimit(imei, ipAddress);
         if (limit) {
             return Result.FAILURE(getLimitError(isEnglish(locale)));
@@ -135,20 +165,28 @@ public class ServerController {
                 member != null ? member.getId() : 0,
                 device != null ? device.getId() : 0,
                 ipAddress,
-                pkgNameReal != null ? pkgNameReal : "com.freetech.turbovpn"
+                pkgNameReal
         );
         if (account != null) {
             ServerProfileVO profile = convert.convert(account);
             if (isEnglish(locale)) {
                 profile.setName(account.getServer().getNameEn());
             }
-            log.info("Account Dispatcher. IPAddr[{}] Server:[{}] Account:[{}] Device:[{}] IMEI:[{}]", ParamUtils.getIpAddr(request), account.getServer().getIpAddr(), account.getUserName(), devId, imei);
+            log.info("Account Dispatcher. IPAddr[{}] Server:[{}] Account:[{}] Device:[{}] IMEI:[{}]", ipAddress, account.getServer().getIpAddr(), account.getUserName(), devId, imei);
             return Result.SUCCESS(profile);
         }
         log.info("No Available Server");
         return Result.FAILURE("No Available Server");
     }
 
+    /**
+     *
+     * @param pkgName 【header参数-H001】假包名
+     * @param token     【header参数-H002】token
+     * @param devId     【header参数-H003】设备id
+     * @param imei      【header参数-H004】imei
+     * @return
+     */
     @RequestMapping("/c0002")
     public Result reportLog(@RequestHeader(Constants.H_PACKGE_NAME) String pkgName,
                             @RequestHeader(Constants.H_LOCALE) String locale,
