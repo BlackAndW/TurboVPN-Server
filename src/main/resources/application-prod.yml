@@ -17,7 +17,7 @@ spring:
     enabled: true
     force: true
   datasource:
-    url: jdbc:mysql://db.runspeeds.com:3306/green_speed?serverTimezone=UTC&useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://db.runspeeds.com:3306/green_speed?serverTimezone=UTC&useUnicode=true&characterEncoding=utf8&useSSL=false
     username: mobplus
     password: mobplus-mysql-pwd.!
     driverClassName: com.mysql.cj.jdbc.Driver
