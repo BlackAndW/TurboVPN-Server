@@ -1,10 +1,14 @@
 package com.mobplus.greenspeed.task;
 
+import com.mobplus.greenspeed.entity.QServer;
 import com.mobplus.greenspeed.entity.Server;
 import com.mobplus.greenspeed.module.gateway.controller.ServerController;
 import com.mobplus.greenspeed.module.gateway.vo.ServerProfileVO;
 import com.mobplus.greenspeed.module.gateway.vo.ServerVO;
+import com.mobplus.greenspeed.repository.ServerRepository;
 import com.mobplus.greenspeed.util.Result;
+import com.querydsl.core.types.ExpressionUtils;
+import com.querydsl.core.types.Predicate;
 import com.yeecloud.meeto.common.exception.ServiceException;
 import com.yeecloud.meeto.configure.service.ConfigureService;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +39,7 @@ import java.util.List;
 public class ScheduleTask {
 
     @Autowired
-    private CacheManager cacheManager;
+    ServerRepository serverRepository;
 
     @Autowired
     private ConfigureService configureService;
@@ -43,7 +47,7 @@ public class ScheduleTask {
     @Autowired
     private ServerController serverController;
 
-    private static final String BASE_DIR_NAME = "d:/1-project/data/server/config/";
+    private static final String BASE_DIR_NAME = "/www/wwwroot/res.sitepsapi.com/";
     private static final String FILE_NAME = "result.json";
 
     @PostConstruct
@@ -68,26 +72,26 @@ public class ScheduleTask {
     /** 手动连接服务器 更新/天 */
     @Scheduled(fixedDelay = 24 * 60 * 60 * 1000)
     public void getServerProfileCfg() {
-        Cache normalServerCache = cacheManager.getCache("normalCache");
-        if (normalServerCache != null && normalServerCache.get("normalServerList") != null) {
-            List<Server> list =  (List<Server>) normalServerCache.get("normalServerList").get();
-            list.forEach(server -> {
-                Result<ServerProfileVO> result = null;
-                try {
-                    result = serverController.getServerProfile("com.freetech.turbovpn", "", "android","","", "com.akin.cleaner.supervpn", server.getId());
-                } catch (ServiceException | IOException e) {
-                    e.printStackTrace();
-                }
-                String dirName = BASE_DIR_NAME + "c0001/" + server.getId() + "/";
-                genConfigFile(dirName, result);
-            });
-        }
+        QServer Qserver = QServer.server;
+        Predicate predicate = Qserver.deleted.eq(Boolean.FALSE);
+        predicate = ExpressionUtils.and(predicate, Qserver.status.eq(Server.State.RUNNING));
+        List<Server> list =  (List<Server>)serverRepository.findAll(predicate);
+        list.forEach(server -> {
+            Result<ServerProfileVO> result = null;
+            try {
+                result = serverController.getServerProfile("com.freetech.turbovpn", "", "android","","", "com.akin.cleaner.supervpn", server.getId());
+            } catch (ServiceException | IOException e) {
+                e.printStackTrace();
+            }
+            String dirName = BASE_DIR_NAME + "c0001/" + server.getId() + "/";
+            genConfigFile(dirName, result);
+        });
     }
 
     @Scheduled(fixedDelay = 3 * 1000)
     public void getServerAutoCfg() throws IOException, ServiceException {
         Result<ServerProfileVO> result = serverController.getServerProfile("com.freetech.turbovpn", "", "android","","", "com.akin.cleaner.supervpn", 0);
-        String dirName = BASE_DIR_NAME + "c0001/0/";
+        String dirName = BASE_DIR_NAME + "3/c0001/0/";
         genConfigFile(dirName, result);
     }
 
