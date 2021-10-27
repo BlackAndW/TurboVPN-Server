@@ -43,6 +43,9 @@ public class ScheduleTask {
     @Autowired
     private ServerController serverController;
 
+    private static final String BASE_DIR_NAME = "d:/1-project/data/server/config/";
+    private static final String FILE_NAME = "result.json";
+
     @PostConstruct
     public void init() {
         this.onSchedule();
@@ -54,18 +57,17 @@ public class ScheduleTask {
         configureService.refresh();
     }
 
-    /** 生成配置文件 60s更新*/
-    @Scheduled(fixedDelay = 60 * 1000)
+    /** 获取服务器列表 更新/天 */
+    @Scheduled(fixedDelay = 24 * 60 * 60 * 1000)
     public void getServerListCfg() throws ServiceException, IOException {
         Result<List<ServerVO>> result = serverController.getServerList("com.freetech.turbovpn", "", "android", "com.akin.cleaner.supervpn");
-        String dirName = "d:/data/server/config/";
-        String fileName = "com.akin.cleaner.supervpn.json";
-        genConfigFile(dirName, fileName, result);
+        String dirName = BASE_DIR_NAME + "c0001/";
+        genConfigFile(dirName, result);
     }
 
-    /** 生成配置文件 3s更新*/
-    @Scheduled(fixedDelay = 60 * 1000)
-    public void getServerProfileCgf() {
+    /** 手动连接服务器 更新/天 */
+    @Scheduled(fixedDelay = 24 * 60 * 60 * 1000)
+    public void getServerProfileCfg() {
         Cache normalServerCache = cacheManager.getCache("normalCache");
         if (normalServerCache != null && normalServerCache.get("normalServerList") != null) {
             List<Server> list =  (List<Server>) normalServerCache.get("normalServerList").get();
@@ -76,19 +78,25 @@ public class ScheduleTask {
                 } catch (ServiceException | IOException e) {
                     e.printStackTrace();
                 }
-                String dirName = "d:/data/server/config/profile/" + server.getId() + "/";
-                String fileName = "com.akin.cleaner.supervpn.json";
-                genConfigFile(dirName, fileName, result);
+                String dirName = BASE_DIR_NAME + "c0001/" + server.getId() + "/";
+                genConfigFile(dirName, result);
             });
         }
     }
 
-    private void genConfigFile(String dirName, String fileName, Result result) {
+    @Scheduled(fixedDelay = 3 * 1000)
+    public void getServerAutoCfg() throws IOException, ServiceException {
+        Result<ServerProfileVO> result = serverController.getServerProfile("com.freetech.turbovpn", "", "android","","", "com.akin.cleaner.supervpn", 0);
+        String dirName = BASE_DIR_NAME + "c0001/0/";
+        genConfigFile(dirName, result);
+    }
+
+    private void genConfigFile(String dirName, Result result) {
         File dirs = new File(dirName);
         if (!dirs.exists() && !dirs.isDirectory()) {
             dirs.mkdirs();
         }
-        try(FileOutputStream os = new FileOutputStream(dirName + fileName);
+        try(FileOutputStream os = new FileOutputStream(dirName + FILE_NAME);
             OutputStreamWriter writer = new OutputStreamWriter(os, StandardCharsets.UTF_8)) {
             writer.write(result.toString());
         } catch (IOException e) {
