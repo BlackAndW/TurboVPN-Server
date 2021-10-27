@@ -66,7 +66,7 @@ public class ScheduleTask {
     }
 
     /** 手动连接服务器 更新/天 */
-    @Scheduled(fixedDelay = 60 * 1000)
+    @Scheduled(fixedDelay = 24 * 60 * 60 * 1000)
     public void getServerProfileCfg() {
         Cache normalServerCache = cacheManager.getCache("normalCache");
         if (normalServerCache != null && normalServerCache.get("normalServerList") != null) {
