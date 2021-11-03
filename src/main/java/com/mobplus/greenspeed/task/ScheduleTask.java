@@ -39,7 +39,7 @@ import java.util.List;
 public class ScheduleTask {
 
     @Autowired
-    ServerRepository serverRepository;
+    private ServerRepository serverRepository;
 
     @Autowired
     private ConfigureService configureService;

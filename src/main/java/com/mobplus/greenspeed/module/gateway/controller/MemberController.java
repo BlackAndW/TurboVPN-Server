@@ -17,9 +17,13 @@ import com.yeecloud.meeto.common.util.ParamUtils;
 import com.yeecloud.meeto.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 
 @Slf4j
 @RestController
@@ -97,6 +101,12 @@ public class MemberController {
         }
         memberService.removeToken(appId, token);
         return Result.SUCCESS();
+    }
+
+    @GetMapping("/test")
+    public void test() throws FileNotFoundException {
+        File file = new File("d:/1-project/data/server/config/c0001/result.json");
+        FileInputStream is = new FileInputStream(file);
     }
 
     private Integer getAppId(String pkgName) throws ServiceException {

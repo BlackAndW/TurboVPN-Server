@@ -59,9 +59,7 @@ public class ServerController {
 
     /**
      * 获取普通节点列表
-     * @param pkgName 【header参数-H001】假包名
-     * @param locale    【header参数-H005】 地区名
-     * @param pkgNameReal   【header参数-H006】 真实包名，默认等于假包名
+     * @param pkgNameReal   【header参数-H006】 真实包名
      * @param mobileOS  【header参数-mobileOS】手机系统 传android(默认)或ios
      * @return
      * @throws ServiceException
@@ -79,9 +77,7 @@ public class ServerController {
     /**
      *
      * 获取VIP节点列表
-     * @param pkgName 【header参数-H001】假包名
-     * @param locale    【header参数-H005】 地区名
-     * @param pkgNameReal   【header参数-H006】 真实包名，默认等于假包名
+     * @param pkgNameReal   【header参数-H006】 真实包名
      * @param mobileOS  【header参数-mobileOS】手机系统 传android(默认)或ios
      * @return
      * @throws ServiceException
@@ -126,11 +122,7 @@ public class ServerController {
 
     /**
      * 获取自动/手动连接节点信息
-     * @param pkgName 【header参数-H001】假包名
-     * @param token     【header参数-H002】token
-     * @param devId     【header参数-H003】设备id
-     * @param imei      【header参数-H004】imei
-     * @param locale    【header参数-H005】地区名
+     * @param pkgNameReal   【header参数-H006】 真实包名，默认值为原始包名
      * @param serverId 【url参数】节点id,0代表自动连接
      * @return
      * @throws ServiceException
