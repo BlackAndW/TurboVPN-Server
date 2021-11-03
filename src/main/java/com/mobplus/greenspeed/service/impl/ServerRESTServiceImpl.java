@@ -301,6 +301,10 @@ public class ServerRESTServiceImpl implements ServerRESTService {
             app.setAppName(appName);
             app.setPkgName(pkgName);
             app.setStatus(0);
+            AppSetting appSetting = new AppSetting();
+            appSetting.setApp(app);
+            appSetting.setPkgName(pkgName);
+            app.setSetting(appSetting);
             appRepository.save(app);
         }
     }
