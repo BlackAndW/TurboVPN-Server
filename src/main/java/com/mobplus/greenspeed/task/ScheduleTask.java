@@ -47,7 +47,8 @@ public class ScheduleTask {
     @Autowired
     private ServerController serverController;
 
-    private static final String BASE_DIR_NAME = "d:/1-project/data/server/config/";
+    private static final String BASE_DIR_NAME = "/www/wwwroot/cdn/";
+
     private static final String FILE_NAME = "result.json";
 
     @PostConstruct
@@ -61,11 +62,19 @@ public class ScheduleTask {
         configureService.refresh();
     }
 
-    /** 获取服务器列表 更新/天 */
+    /** 获取普通服务器列表 更新/天 */
     @Scheduled(fixedDelay = 24 * 60 * 60 * 1000)
     public void getServerListCfg() throws ServiceException, IOException {
-        Result<List<ServerVO>> result = serverController.getServerList("com.freetech.turbovpn", "", "android", "com.akin.cleaner.supervpn");
-        String dirName = BASE_DIR_NAME + "c0001/";
+        Result<List<ServerVO>> result = serverController.getServerList("com.freetech.turbovpn", "", "android", "com.freetech.turbovpn");
+        String dirName = BASE_DIR_NAME + "/app/api/v1/c03/c0001/";
+        genConfigFile(dirName, result);
+    }
+
+    /** 获取VIP服务器列表 更新/天 */
+    @Scheduled(fixedDelay = 24 * 60 * 60 * 1000)
+    public void getVIPServerListCfg() throws ServiceException, IOException {
+        Result<List<ServerVO>> result = serverController.getServerList("com.freetech.turbovpn", "", "android", "com.freetech.turbovpn");
+        String dirName = BASE_DIR_NAME + "/app/api/v1/c03/vip/";
         genConfigFile(dirName, result);
     }
 
@@ -79,21 +88,21 @@ public class ScheduleTask {
         list.forEach(server -> {
             Result<ServerProfileVO> result = null;
             try {
-                result = serverController.getServerProfile("com.freetech.turbovpn", "", "android","","", "com.akin.cleaner.supervpn", server.getId());
+                result = serverController.getServerProfile("com.freetech.turbovpn", "", "android","","", "com.freetech.turbovpn", server.getId());
             } catch (ServiceException | IOException e) {
                 e.printStackTrace();
             }
-            String dirName = BASE_DIR_NAME + "c0001/" + server.getId() + "/";
+            String dirName = BASE_DIR_NAME + "/app/api/v1/c03/c0001/" + server.getId() + "/";
             genConfigFile(dirName, result);
         });
     }
 
-//    @Scheduled(fixedDelay = 3 * 1000)
-//    public void getServerAutoCfg() throws IOException, ServiceException {
-//        Result<ServerProfileVO> result = serverController.getServerProfile("com.freetech.turbovpn", "", "android","","", "com.akin.cleaner.supervpn", 0);
-//        String dirName = BASE_DIR_NAME + "c0001/0/";
-//        genConfigFile(dirName, result);
-//    }
+    @Scheduled(fixedDelay = 3 * 1000)
+    public void getServerAutoCfg() throws IOException, ServiceException {
+        Result<ServerProfileVO> result = serverController.getServerProfile("com.freetech.turbovpn", "", "android","","", "com.freetech.turbovpn", 0);
+        String dirName = BASE_DIR_NAME + "/app/api/v1/c03/c0001/0/";
+        genConfigFile(dirName, result);
+    }
 
     private void genConfigFile(String dirName, Result result) {
         File dirs = new File(dirName);
