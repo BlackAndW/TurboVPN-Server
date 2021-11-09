@@ -59,19 +59,20 @@ public class ServerController {
 
     /**
      * 获取普通节点列表
-     * @param pkgNameReal   【header参数-H006】 真实包名
      * @param mobileOS  【header参数-mobileOS】手机系统 传android(默认)或ios
+     * @param pkgNameReal   【header参数-H006】 真实包名
      * @return
      * @throws ServiceException
      */
     @ApiDoc
     @PostMapping("/c0001")
-    public Result<List<ServerVO>> getServerList(@RequestHeader(value = Constants.H_PACKGE_NAME, defaultValue = "com.freetech.turbovpn") String pkgName,
-                                                @RequestHeader(value = Constants.H_LOCALE, defaultValue = "") String locale,
-                                                @RequestHeader(value = Constants.H_MOIBILE_OS, defaultValue = "android") String mobileOS,
-                                                @RequestHeader(value = Constants.H_PACKGE_NAME_REAL, defaultValue = "com.freetech.turbovpn") String pkgNameReal) throws ServiceException {
+    public Result getServerList(@RequestHeader(value = Constants.H_PACKGE_NAME, defaultValue = "com.freetech.turbovpn") String pkgName,
+                                @RequestHeader(value = Constants.H_LOCALE, defaultValue = "") String locale,
+                                @RequestHeader(value = Constants.H_MOIBILE_OS, defaultValue = "android") String mobileOS,
+                                @RequestHeader(value = Constants.H_PACKGE_NAME_REAL, defaultValue = "com.freetech.turbovpn") String pkgNameReal,
+                                @RequestHeader(value = "Api-Version", defaultValue = "1.0") String version)  throws ServiceException {
 
-        return getResultList(pkgName, locale, mobileOS, Server.Type.NORMAL, pkgNameReal);
+        return getResultList(pkgName, locale, mobileOS, Server.Type.NORMAL, pkgNameReal, version);
     }
 
     /**
@@ -84,12 +85,13 @@ public class ServerController {
      */
     @ApiDoc
     @PostMapping("/vip")
-    public Result<List<ServerVO>> getVipServerList(@RequestHeader(value = Constants.H_PACKGE_NAME, defaultValue = "com.freetech.turbovpn") String pkgName,
-                                    @RequestHeader(value = Constants.H_LOCALE, defaultValue = "") String locale,
-                                   @RequestHeader(value = Constants.H_MOIBILE_OS, defaultValue = "android") String mobileOS,
-                                   @RequestHeader(value = Constants.H_PACKGE_NAME_REAL, defaultValue = "com.freetech.turbovpn") String pkgNameReal) throws ServiceException {
+    public Result getVipServerList(@RequestHeader(value = Constants.H_PACKGE_NAME, defaultValue = "com.freetech.turbovpn") String pkgName,
+                                                   @RequestHeader(value = Constants.H_LOCALE, defaultValue = "") String locale,
+                                                   @RequestHeader(value = Constants.H_MOIBILE_OS, defaultValue = "android") String mobileOS,
+                                                   @RequestHeader(value = Constants.H_PACKGE_NAME_REAL, defaultValue = "com.freetech.turbovpn") String pkgNameReal,
+                                                   @RequestHeader(value = "Api-Version", defaultValue = "1.0") String version) throws ServiceException {
 
-        return getResultList(pkgName, locale, mobileOS, Server.Type.VIP, pkgNameReal);
+        return getResultList(pkgName, locale, mobileOS, Server.Type.VIP, pkgNameReal, version);
     }
 
     /**
@@ -98,7 +100,7 @@ public class ServerController {
      * @return
      * @throws ServiceException
      */
-    private Result<List<ServerVO>> getResultList(String pkgName, String locale, String mobileOS, Integer type, String pkgNameReal) throws ServiceException{
+    private Result getResultList(String pkgName, String locale, String mobileOS, Integer type, String pkgNameReal, String version) throws ServiceException{
         Integer appId = getAppId(pkgName);
         if (appId == null) {
             return Result.FAILURE(ResultCode.PARAM_ERROR);
@@ -114,10 +116,7 @@ public class ServerController {
             list = serverRESTService.sortByOrder(pkgNameReal, serverFilterBySetting);
         }
         List<ServerVO> resultList = transform(list, locale);
-
-//        JSONArray result = DataUtils.snake2Camel(resultList);
-        String message = "ok";
-        return new Result<>(2000, message, resultList);
+        return Result.isEncode(version, resultList);
     }
 
     /**
@@ -130,12 +129,13 @@ public class ServerController {
      */
     @ApiDoc
     @PostMapping("/c0001/{id}")
-    public Result<ServerProfileVO> getServerProfile(@RequestHeader(value = Constants.H_PACKGE_NAME, defaultValue="com.freetech.turbovpn") String pkgName,
+    public Result getServerProfile(@RequestHeader(value = Constants.H_PACKGE_NAME, defaultValue="com.freetech.turbovpn") String pkgName,
                                                     @RequestHeader(value = Constants.H_LOCALE, defaultValue="") String locale,
                                                     @RequestHeader(value = Constants.H_TOKEN, defaultValue="") String token,
                                                     @RequestHeader(value = Constants.H_UUID, defaultValue="") String devId,
                                                     @RequestHeader(value = Constants.H_IMEI, defaultValue="") String imei,
                                                     @RequestHeader(value = Constants.H_PACKGE_NAME_REAL, defaultValue = "com.freetech.turbovpn") String pkgNameReal,
+                                                    @RequestHeader(value = "Api-Version", defaultValue = "1.0") String version,
                                                     @PathVariable(value = "id", required = true) Integer serverId) throws ServiceException, IOException {
         System.out.println(request);
         String ipAddress = request == null ? ParamUtils.getIpAddr(request) : "";
@@ -165,14 +165,14 @@ public class ServerController {
                 profile.setName(account.getServer().getNameEn());
             }
             log.info("Account Dispatcher. IPAddr[{}] Server:[{}] Account:[{}] Device:[{}] IMEI:[{}]", ipAddress, account.getServer().getIpAddr(), account.getUserName(), devId, imei);
-            return Result.SUCCESS(profile);
+            return Result.isEncode(version, profile);
         }
         log.info("No Available Server");
         return Result.FAILURE("No Available Server");
     }
 
     /**
-     *
+     * 废弃接口
      * @param pkgName 【header参数-H001】假包名
      * @param token     【header参数-H002】token
      * @param devId     【header参数-H003】设备id
@@ -184,7 +184,8 @@ public class ServerController {
                             @RequestHeader(Constants.H_LOCALE) String locale,
                             @RequestHeader(Constants.H_TOKEN) String token,
                             @RequestHeader(Constants.H_UUID) String devId,
-                            @RequestHeader(Constants.H_IMEI) String imei) {
+                            @RequestHeader(Constants.H_IMEI) String imei,
+                            @RequestHeader(value = "Api-Version", defaultValue = "1.0") String version) {
         String content = ParamUtils.parameterToString(request);
         log.info("IpAddr:[{}] CONNECT_LOG PKG:[{}] TOKEN:[{}] DEVICE:[{}] IMEI:[{}] MSG:[{}]", ParamUtils.getIpAddr(request), pkgName, token, devId, imei, content);
         return Result.SUCCESS();
