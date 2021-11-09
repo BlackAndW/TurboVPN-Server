@@ -65,7 +65,7 @@ public class ScheduleTask {
     /** 获取普通服务器列表 更新/天 */
     @Scheduled(fixedDelay = 24 * 60 * 60 * 1000)
     public void getServerListCfg() throws ServiceException, IOException {
-        Result<List<ServerVO>> result = serverController.getServerList("com.freetech.turbovpn", "", "android", "com.freetech.turbovpn");
+        Result result = serverController.getServerList("com.freetech.turbovpn", "", "android", "com.freetech.turbovpn", "1.1");
         String dirName = BASE_DIR_NAME + "/app/api/v1/c03/c0001/";
         genConfigFile(dirName, result);
     }
@@ -73,7 +73,7 @@ public class ScheduleTask {
     /** 获取VIP服务器列表 更新/天 */
     @Scheduled(fixedDelay = 24 * 60 * 60 * 1000)
     public void getVIPServerListCfg() throws ServiceException, IOException {
-        Result<List<ServerVO>> result = serverController.getServerList("com.freetech.turbovpn", "", "android", "com.freetech.turbovpn");
+        Result result = serverController.getServerList("com.freetech.turbovpn", "", "android", "com.freetech.turbovpn", "1.1");
         String dirName = BASE_DIR_NAME + "/app/api/v1/c03/vip/";
         genConfigFile(dirName, result);
     }
@@ -86,9 +86,9 @@ public class ScheduleTask {
         predicate = ExpressionUtils.and(predicate, Qserver.status.eq(Server.State.RUNNING));
         List<Server> list =  (List<Server>)serverRepository.findAll(predicate);
         list.forEach(server -> {
-            Result<ServerProfileVO> result = null;
+            Result result = null;
             try {
-                result = serverController.getServerProfile("com.freetech.turbovpn", "", "android","","", "com.freetech.turbovpn", server.getId());
+                result = serverController.getServerProfile("com.freetech.turbovpn", "", "android","","", "com.freetech.turbovpn", "1.1", server.getId());
             } catch (ServiceException | IOException e) {
                 e.printStackTrace();
             }
@@ -99,7 +99,7 @@ public class ScheduleTask {
 
     @Scheduled(fixedDelay = 3 * 1000)
     public void getServerAutoCfg() throws IOException, ServiceException {
-        Result<ServerProfileVO> result = serverController.getServerProfile("com.freetech.turbovpn", "", "android","","", "com.freetech.turbovpn", 0);
+        Result result = serverController.getServerProfile("com.freetech.turbovpn", "", "android","","", "com.freetech.turbovpn", "1.1", 0);
         String dirName = BASE_DIR_NAME + "/app/api/v1/c03/c0001/0/";
         genConfigFile(dirName, result);
     }
