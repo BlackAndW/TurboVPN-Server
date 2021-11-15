@@ -85,8 +85,8 @@ public class Result<T> {
         return new String(base64.decode(encodedText));
     }
 
-    public static <T> Result isEncode(String version, T result) {
-        Double versionD = Double.valueOf(version);
+    public static <T> Result isEncode(String apiVersion, T result) {
+        Double versionD = Double.valueOf(apiVersion);
         return versionD > 1.0 ? Result.ENCODE(result) : Result.SUCCESS(result);
     }
 }
