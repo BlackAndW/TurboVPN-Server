@@ -64,7 +64,6 @@ public class ServerController {
      * @return
      * @throws ServiceException
      */
-    @ApiDoc
     @PostMapping("/c0001")
     public Result getServerList(@RequestHeader(value = Constants.H_PACKGE_NAME, defaultValue = "com.freetech.turbovpn") String pkgName,
                                 @RequestHeader(value = Constants.H_LOCALE, defaultValue = "") String locale,
@@ -83,7 +82,6 @@ public class ServerController {
      * @return
      * @throws ServiceException
      */
-    @ApiDoc
     @PostMapping("/vip")
     public Result getVipServerList(@RequestHeader(value = Constants.H_PACKGE_NAME, defaultValue = "com.freetech.turbovpn") String pkgName,
                                                    @RequestHeader(value = Constants.H_LOCALE, defaultValue = "") String locale,
@@ -127,7 +125,6 @@ public class ServerController {
      * @throws ServiceException
      * @throws IOException
      */
-    @ApiDoc
     @PostMapping("/c0001/{id}")
     public Result getServerProfile(@RequestHeader(value = Constants.H_PACKGE_NAME, defaultValue="com.freetech.turbovpn") String pkgName,
                                                     @RequestHeader(value = Constants.H_LOCALE, defaultValue="") String locale,

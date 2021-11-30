@@ -63,7 +63,7 @@ public class ScheduleTask {
     }
 
     /** 获取普通服务器列表 更新/天 */
-    @Scheduled(fixedDelay = 24 * 60 * 60 * 1000)
+//    @Scheduled(fixedDelay = 24 * 60 * 60 * 1000)
     public void getServerListCfg() throws ServiceException, IOException {
         Result result = serverController.getServerList("com.freetech.turbovpn", "", "android", "com.freetech.turbovpn", "1.1");
         String dirName = BASE_DIR_NAME + "/app/api/v1/c03/c0001/";
@@ -71,7 +71,7 @@ public class ScheduleTask {
     }
 
     /** 获取VIP服务器列表 更新/天 */
-    @Scheduled(fixedDelay = 24 * 60 * 60 * 1000)
+//    @Scheduled(fixedDelay = 24 * 60 * 60 * 1000)
     public void getVIPServerListCfg() throws ServiceException, IOException {
         Result result = serverController.getServerList("com.freetech.turbovpn", "", "android", "com.freetech.turbovpn", "1.1");
         String dirName = BASE_DIR_NAME + "/app/api/v1/c03/vip/";
@@ -79,7 +79,7 @@ public class ScheduleTask {
     }
 
     /** 手动连接服务器 更新/天 */
-    @Scheduled(fixedDelay = 24 * 60 * 60 * 1000)
+//    @Scheduled(fixedDelay = 24 * 60 * 60 * 1000)
     public void getServerProfileCfg() {
         QServer Qserver = QServer.server;
         Predicate predicate = Qserver.deleted.eq(Boolean.FALSE);
@@ -97,7 +97,7 @@ public class ScheduleTask {
         });
     }
 
-    @Scheduled(fixedDelay = 3 * 1000)
+//    @Scheduled(fixedDelay = 3 * 1000)
     public void getServerAutoCfg() throws IOException, ServiceException {
         Result result = serverController.getServerProfile("com.freetech.turbovpn", "", "android","","", "com.freetech.turbovpn", "1.1", 0);
         String dirName = BASE_DIR_NAME + "/app/api/v1/c03/c0001/0/";
