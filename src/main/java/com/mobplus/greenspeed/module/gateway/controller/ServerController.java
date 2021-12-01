@@ -8,7 +8,9 @@ import com.mobplus.greenspeed.entity.*;
 import com.mobplus.greenspeed.module.gateway.convert.ServerConvert;
 import com.mobplus.greenspeed.module.gateway.vo.ServerProfileVO;
 import com.mobplus.greenspeed.module.gateway.vo.ServerVO;
+import com.mobplus.greenspeed.repository.Ip2locationRepository;
 import com.mobplus.greenspeed.service.*;
+import com.mobplus.greenspeed.util.IpUtils;
 import com.mobplus.greenspeed.util.Result;
 import com.yeecloud.meeto.common.exception.ServiceException;
 import com.yeecloud.meeto.common.result.ResultCode;
@@ -53,7 +55,7 @@ public class ServerController {
     @Autowired
     private ServerRESTService serverRESTService;
     @Autowired
-    private IPParserService ipParserService;
+    private Ip2locationRepository ip2locationRepository;
     @Autowired
     private ConfigureService configureService;
 
@@ -88,7 +90,6 @@ public class ServerController {
                                                    @RequestHeader(value = Constants.H_MOIBILE_OS, defaultValue = "android") String mobileOS,
                                                    @RequestHeader(value = Constants.H_PACKGE_NAME_REAL, defaultValue = "com.freetech.turbovpn") String pkgNameReal,
                                                    @RequestHeader(value = "Api-Version", defaultValue = "1.0") String apiVersion) throws ServiceException {
-
         return getResultList(pkgName, locale, mobileOS, Server.Type.VIP, pkgNameReal, apiVersion);
     }
 
@@ -99,6 +100,11 @@ public class ServerController {
      * @throws ServiceException
      */
     private Result getResultList(String pkgName, String locale, String mobileOS, Integer type, String pkgNameReal, String apiVersion) throws ServiceException{
+        String ipAddress = request != null ? ParamUtils.getIpAddr(request) : "";
+        boolean limit = isNeedRegionLimit(ipAddress);
+        if (limit) {
+            return Result.FAILURE(getLimitError(isEnglish(locale)));
+        }
         Integer appId = getAppId(pkgName);
         if (appId == null) {
             return Result.FAILURE(ResultCode.PARAM_ERROR);
@@ -134,17 +140,16 @@ public class ServerController {
                                                     @RequestHeader(value = Constants.H_PACKGE_NAME_REAL, defaultValue = "com.freetech.turbovpn") String pkgNameReal,
                                                     @RequestHeader(value = "Api-Version", defaultValue = "1.0") String apiVersion,
                                                     @PathVariable(value = "id", required = true) Integer serverId) throws ServiceException, IOException {
-        System.out.println(request);
-        String ipAddress = request == null ? ParamUtils.getIpAddr(request) : "";
+        String ipAddress = request != null ? ParamUtils.getIpAddr(request) : "";
+        boolean limit = isNeedRegionLimit(ipAddress);
+        if (limit) {
+            return Result.FAILURE(getLimitError(isEnglish(locale)));
+        }
         log.info("IpAddr:[{}] PKG:[{}] TOKEN:[{}] UUID:[{}] IMEI:[{}] RequestServer:[{}]", ipAddress, pkgName, token, devId, imei, serverId);
         Integer appId = getAppId(pkgName);
         if (appId == null) {
             log.info("Cann't found Pkg:[{}]", pkgName);
             return Result.FAILURE(ResultCode.PARAM_ERROR);
-        }
-        boolean limit = isNeedRegionLimit(imei, ipAddress);
-        if (limit) {
-            return Result.FAILURE(getLimitError(isEnglish(locale)));
         }
 
         Member member = memberService.findMemberByToken(appId, token);
@@ -218,10 +223,7 @@ public class ServerController {
     }
 
 
-    private boolean isNeedRegionLimit(String imei, String ipAddress) {
-        if (isImeiNoLimit(imei)) {
-            return false;
-        }
+    private boolean isNeedRegionLimit(String ipAddress) {
         //获取限制地区
         String value = configureService.getValueByKey("limit.country.deny", "");
         if (StringUtils.isBlank(value)) {
@@ -229,9 +231,9 @@ public class ServerController {
             return false;
         }
         //解析IP
-        IPInfo ipInfo = ipParserService.execute(ipAddress);
-        if (StringUtils.contains(value, ipInfo.getCountry())) {
-            log.error(" IMEI:[{}] IpAddr:[{}] in Limit Country:[{}]!", imei, ipAddress, ipInfo.getCountry());
+        Ip2location ip2location = ip2locationRepository.findIpInfo(IpUtils.ipStr2long(ipAddress));
+        if (StringUtils.contains(value, ip2location.getCountryCode())) {
+            log.error(" IMEI:[{}] IpAddr:[{}] in Limit Country:[{}]!", "no imei", ipAddress, ip2location.getCountryCode());
             return true;
         }
         return false;
