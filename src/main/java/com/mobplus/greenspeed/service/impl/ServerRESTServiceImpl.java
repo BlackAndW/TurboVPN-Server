@@ -52,7 +52,7 @@ public class ServerRESTServiceImpl implements ServerRESTService {
     @Autowired
     private ErrorLogRepository errorLogRepository;
 
-    private final static String IconBaseUrl = "http://res.turbovpns.com/images/flag_";
+    private final static String IconBaseUrl = "https://res.turbovpns.com/images/flag_";
 
     @Override
     @Transactional(rollbackFor = Throwable.class)
