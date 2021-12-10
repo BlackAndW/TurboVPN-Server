@@ -86,10 +86,10 @@ public class ServerController {
      */
     @PostMapping("/vip")
     public Result getVipServerList(@RequestHeader(value = Constants.H_PACKGE_NAME, defaultValue = "com.freetech.turbovpn") String pkgName,
-                                                   @RequestHeader(value = Constants.H_LOCALE, defaultValue = "") String locale,
-                                                   @RequestHeader(value = Constants.H_MOIBILE_OS, defaultValue = "android") String mobileOS,
-                                                   @RequestHeader(value = Constants.H_PACKGE_NAME_REAL, defaultValue = "com.freetech.turbovpn") String pkgNameReal,
-                                                   @RequestHeader(value = "Api-Version", defaultValue = "1.0") String apiVersion) throws ServiceException {
+                                   @RequestHeader(value = Constants.H_LOCALE, defaultValue = "") String locale,
+                                   @RequestHeader(value = Constants.H_MOIBILE_OS, defaultValue = "android") String mobileOS,
+                                   @RequestHeader(value = Constants.H_PACKGE_NAME_REAL, defaultValue = "com.freetech.turbovpn") String pkgNameReal,
+                                   @RequestHeader(value = "Api-Version", defaultValue = "1.0") String apiVersion) throws ServiceException {
         return getResultList(pkgName, locale, mobileOS, Server.Type.VIP, pkgNameReal, apiVersion);
     }
 
@@ -100,7 +100,7 @@ public class ServerController {
      * @throws ServiceException
      */
     private Result getResultList(String pkgName, String locale, String mobileOS, Integer type, String pkgNameReal, String apiVersion) throws ServiceException{
-        String ipAddress = request != null ? ParamUtils.getIpAddr(request) : "";
+        String ipAddress = request != null && !locale.equals("local")? ParamUtils.getIpAddr(request) : "";
         boolean limit = isNeedRegionLimit(ipAddress);
         if (limit) {
             return Result.FAILURE(getLimitError(isEnglish(locale)));
@@ -140,7 +140,7 @@ public class ServerController {
                                                     @RequestHeader(value = Constants.H_PACKGE_NAME_REAL, defaultValue = "com.freetech.turbovpn") String pkgNameReal,
                                                     @RequestHeader(value = "Api-Version", defaultValue = "1.0") String apiVersion,
                                                     @PathVariable(value = "id", required = true) Integer serverId) throws ServiceException, IOException {
-        String ipAddress = request != null ? ParamUtils.getIpAddr(request) : "";
+        String ipAddress = request != null && !locale.equals("local")? ParamUtils.getIpAddr(request) : "";
         boolean limit = isNeedRegionLimit(ipAddress);
         if (limit) {
             return Result.FAILURE(getLimitError(isEnglish(locale)));
@@ -230,7 +230,8 @@ public class ServerController {
             //未设置限制地区
             return false;
         }
-        //解析IP
+        //解析IP,测试用ip，生产环境需要注释掉
+        ipAddress = "103.137.150.238";
         Ip2location ip2location = ip2locationRepository.findIpInfo(IpUtils.ipStr2long(ipAddress));
         if (StringUtils.contains(value, ip2location.getCountryCode())) {
             log.error(" IMEI:[{}] IpAddr:[{}] in Limit Country:[{}]!", "no imei", ipAddress, ip2location.getCountryCode());

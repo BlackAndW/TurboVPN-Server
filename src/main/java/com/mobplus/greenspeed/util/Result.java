@@ -71,21 +71,24 @@ public class Result<T> {
     }
 
     public static Result FAILURE(int code, String message) {
-        return new Result(code, message, (Object)null);
+        return new Result(code, message, new JSONObject());
     }
 
     public static Result FAILURE(ResultCode result) {
-        return new Result(result.getCode(), result.getMessage(), (Object)null);
+        return new Result(result.getCode(), result.getMessage(), new JSONObject());
     }
 
     public static <T> Result ENCODE(T result) {
+        if (result == null) {
+            return new Result(5000, "no data", new JSONObject());
+        }
         String resultStr = JSONArray.toJSON(result).toString();
         final Base64 base64 = new Base64();
         String encodedBase64 = base64.encodeToString(resultStr.getBytes(StandardCharsets.UTF_8));
         return new Result(2000, "ok", new StringBuilder(encodedBase64).reverse().toString());
     }
 
-    public String decodeStr(String encodedText) {
+    public static String DECODE(String encodedText) {
         final Base64 base64 = new Base64();
         encodedText = new StringBuilder(encodedText).reverse().toString();
         return new String(base64.decode(encodedText));
