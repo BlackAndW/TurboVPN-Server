@@ -84,18 +84,30 @@ public class ServerRESTServiceImpl implements ServerRESTService {
         }
     }
 
-    @Async
     @Override
-    public synchronized void updateOnlineConn(String ipAddr, Integer onlineConn) throws ServiceException {
+    public void updateOnlineConn(String ipAddr, Integer onlineConn) throws ServiceException {
         QServer qServer = QServer.server;
-        Predicate predicate = ExpressionUtils.and(qServer.deleted.eq(Boolean.FALSE), qServer.status.eq(2));
+        Predicate predicate = ExpressionUtils.and(qServer.deleted.eq(Boolean.FALSE), qServer.status.eq(Server.State.RUNNING));
         predicate = ExpressionUtils.and(predicate, qServer.ipAddr.eq(ipAddr));
         Server server = serverRepository.findOne(predicate).orElse(null);
-        if (null != server && !server.isDeleted()) {
+        if (server != null) {
             server.setOnlineConn(onlineConn);
             serverRepository.save(server);
         } else {
             log.info("update fail! [{}] is not exist in server list!", ipAddr);
+        }
+    }
+
+    @Override
+    public void updateClose(String ipAddr) throws ServiceException {
+        QServer qServer = QServer.server;
+        Predicate predicate = ExpressionUtils.and(qServer.deleted.eq(Boolean.FALSE), qServer.status.eq(Server.State.RUNNING));
+        predicate = ExpressionUtils.and(predicate, qServer.ipAddr.eq(ipAddr));
+        Server server = serverRepository.findOne(predicate).orElse(null);
+        if (server != null) {
+            server.setStatus(Server.State.SUSPEND);
+            serverRepository.save(server);
+            log.info("[{}] has been stopped!!!", ipAddr);
         }
     }
 
