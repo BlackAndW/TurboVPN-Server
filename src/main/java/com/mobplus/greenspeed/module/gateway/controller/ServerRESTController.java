@@ -114,6 +114,11 @@ public class ServerRESTController {
         serverRESTService.updateOnlineConn(ipAddr, onlineConn);
     }
 
+    @PostMapping("/update/close")
+    public void updateClose(@RequestParam(value = "ip_addr") String ipAddr) throws ServiceException {
+        serverRESTService.updateClose(ipAddr);
+    }
+
     @PostMapping("/create/app")
     public void createApp(@RequestBody Map<String, Object> params) throws ServiceException {
         serverRESTService.createApp(new Query(params));
