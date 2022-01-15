@@ -8,6 +8,8 @@ import com.mobplus.greenspeed.repository.AppRepository;
 import com.mobplus.greenspeed.repository.ErrorLogRepository;
 import com.mobplus.greenspeed.repository.ServerRepository;
 import com.mobplus.greenspeed.service.ServerRESTService;
+import com.mobplus.greenspeed.util.IpUtils;
+import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.ExpressionUtils;
 import com.querydsl.core.types.Predicate;
 import com.yeecloud.meeto.common.exception.ServiceException;
@@ -289,6 +291,27 @@ public class ServerRESTServiceImpl implements ServerRESTService {
         if (app == null) {
             log.info("app is not exist!, pkgName is {}", pkgName);
             return null;
+        }
+
+        String userIp = query.get("userIp", String.class);
+        if (userIp != null && userIp.length() > 0) {
+            predicate = ExpressionUtils.and(predicate, qErrorLog.userIp.eq(IpUtils.ipStr2long(userIp)));
+        }
+        String country = query.get("country", String.class);
+        if (country != null && country.length() > 0) {
+            predicate = ExpressionUtils.and(predicate, qErrorLog.country.eq(country));
+        }
+        String region = query.get("region", String.class);
+        if (region != null && region.length() > 0) {
+            predicate = ExpressionUtils.and(predicate, qErrorLog.country.eq(region));
+        }
+        String city = query.get("city", String.class);
+        if (city != null && city.length() > 0) {
+            predicate = ExpressionUtils.and(predicate, qErrorLog.city.eq(city));
+        }
+        String serverName = query.get("serverName", String.class);
+        if (serverName != null && serverName.length() > 0) {
+            predicate = ExpressionUtils.and(predicate, qErrorLog.serverName.eq(serverName));
         }
         predicate = ExpressionUtils.and(predicate, qErrorLog.app.id.eq(app.getId()));
         String startTimeStr = query.get("startTimeStr", String.class);

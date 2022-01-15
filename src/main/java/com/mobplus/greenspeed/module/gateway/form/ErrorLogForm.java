@@ -17,4 +17,7 @@ public class ErrorLogForm {
 
     /** 错误信息 */
     private String errMsg;
+
+    /** 访问节点名 */
+    private String serverName;
 }
