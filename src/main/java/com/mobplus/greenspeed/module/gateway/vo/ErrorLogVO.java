@@ -32,4 +32,7 @@ public class ErrorLogVO {
 
     /** 节点名 */
     private String serverName;
+
+    /** 系统版本 */
+    private String os;
 }

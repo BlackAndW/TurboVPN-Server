@@ -313,6 +313,10 @@ public class ServerRESTServiceImpl implements ServerRESTService {
         if (serverName != null && serverName.length() > 0) {
             predicate = ExpressionUtils.and(predicate, qErrorLog.serverName.eq(serverName));
         }
+        String os = query.get("os", String.class);
+        if (os != null && os.length() > 0) {
+            predicate = ExpressionUtils.and(predicate, qErrorLog.os.eq(os));
+        }
         predicate = ExpressionUtils.and(predicate, qErrorLog.app.id.eq(app.getId()));
         String startTimeStr = query.get("startTimeStr", String.class);
         String endTimeStr = query.get("endTimeStr", String.class);

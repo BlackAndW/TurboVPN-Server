@@ -40,4 +40,6 @@ public class ErrorLog extends AuditorEntity {
 
     @Column(name = "n_server_name")
     private String serverName;
+    @Column(name = "n_os")
+    private String os;
 }

@@ -20,4 +20,7 @@ public class ErrorLogForm {
 
     /** 访问节点名 */
     private String serverName;
+
+    /** 手机系统版本 */
+    private String os;
 }
