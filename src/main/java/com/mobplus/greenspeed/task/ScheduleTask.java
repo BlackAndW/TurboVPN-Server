@@ -51,6 +51,8 @@ public class ScheduleTask {
 
     private static final String FILE_NAME = "result.json";
 
+    private static final String API_VERSION = "1.0";
+
     @PostConstruct
     public void init() {
         this.onSchedule();
@@ -65,7 +67,7 @@ public class ScheduleTask {
     /** 获取普通服务器列表 更新/天 */
     @Scheduled(fixedDelay = 24 * 60 * 60 * 1000)
     public void getServerListCfg() throws ServiceException, IOException {
-        Result result = serverController.getServerList("com.freetech.turbovpn", "local", "android", "com.freetech.turbovpn", "1.1");
+        Result result = serverController.getServerList("com.freetech.turbovpn", "local", "android", "com.freetech.turbovpn", API_VERSION);
         String dirName = BASE_DIR_NAME + "/app/api/v1/c03/c0001/";
         genConfigFile(dirName, result);
     }
@@ -73,7 +75,7 @@ public class ScheduleTask {
     /** 获取VIP服务器列表 更新/天 */
     @Scheduled(fixedDelay = 24 * 60 * 60 * 1000)
     public void getVIPServerListCfg() throws ServiceException, IOException {
-        Result result = serverController.getServerList("com.freetech.turbovpn", "local", "android", "com.freetech.turbovpn", "1.1");
+        Result result = serverController.getServerList("com.freetech.turbovpn", "local", "android", "com.freetech.turbovpn", API_VERSION);
         String dirName = BASE_DIR_NAME + "/app/api/v1/c03/vip/";
         genConfigFile(dirName, result);
     }
@@ -88,7 +90,7 @@ public class ScheduleTask {
         list.forEach(server -> {
             Result result = null;
             try {
-                result = serverController.getServerProfile("com.freetech.turbovpn", "local", "android","","", "com.freetech.turbovpn", "1.1", server.getId());
+                result = serverController.getServerProfile("com.freetech.turbovpn", "local", "android","","", "com.freetech.turbovpn", API_VERSION, server.getId());
             } catch (ServiceException | IOException e) {
                 e.printStackTrace();
             }
@@ -99,7 +101,7 @@ public class ScheduleTask {
 
     @Scheduled(fixedDelay = 3 * 1000)
     public void getServerAutoCfg() throws IOException, ServiceException {
-        Result result = serverController.getServerProfile("com.freetech.turbovpn", "local", "android","","", "com.freetech.turbovpn", "1.1", 0);
+        Result result = serverController.getServerProfile("com.freetech.turbovpn", "local", "android","","", "com.freetech.turbovpn", API_VERSION, 0);
         String dirName = BASE_DIR_NAME + "/app/api/v1/c03/c0001/0/";
         genConfigFile(dirName, result);
     }
