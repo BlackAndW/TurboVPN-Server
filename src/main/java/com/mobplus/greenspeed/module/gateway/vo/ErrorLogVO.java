@@ -17,4 +17,22 @@ public class ErrorLogVO {
 
     /** 创建时间 */
     private long createdAt;
+
+    /** 用户ip */
+    private String userIp;
+
+    /** 国家 */
+    private String country;
+
+    /** 地区 */
+    private String region;
+
+    /** 城市 */
+    private String city;
+
+    /** 节点名 */
+    private String serverName;
+
+    /** 系统版本 */
+    private String os;
 }

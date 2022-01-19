@@ -59,17 +59,17 @@ public class IpUtils {
         return ipStr.toString();
     }
 
-    // 淘宝ip接口调用
-    private JSONObject getIpInfo(String ip) throws IOException {
-        OkHttpClient client = new OkHttpClient();
-        FormBody.Builder formBuilder = new FormBody.Builder();
-        formBuilder.add("ip", ip);
-        formBuilder.add("accessKey", "alibaba-inc");
-        Request request = new Request.Builder()
-                .url("https://ip.taobao.com/outGetIpInfo")
-                .post(formBuilder.build())
-                .build();
-        String resultJson = client.newCall(request).execute().body().string();
-        return JSONObject.parseObject(resultJson).getJSONObject("data");
-    }
+    // 淘宝ip接口调用，有QPS限制，弃用
+//    private JSONObject getIpInfo(String ip) throws IOException {
+//        OkHttpClient client = new OkHttpClient();
+//        FormBody.Builder formBuilder = new FormBody.Builder();
+//        formBuilder.add("ip", ip);
+//        formBuilder.add("accessKey", "alibaba-inc");
+//        Request request = new Request.Builder()
+//                .url("https://ip.taobao.com/outGetIpInfo")
+//                .post(formBuilder.build())
+//                .build();
+//        String resultJson = client.newCall(request).execute().body().string();
+//        return JSONObject.parseObject(resultJson).getJSONObject("data");
+//    }
 }

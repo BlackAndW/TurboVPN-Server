@@ -73,6 +73,7 @@ public class VpnLogController {
         result.getContent().forEach( item -> {
             ErrorLogVO errorLogVO = new ErrorLogVO();
             NewBeanUtils.copyProperties(errorLogVO, item);
+            errorLogVO.setUserIp(IpUtils.ipLong2Str(item.getUserIp()));
             resultList.add(errorLogVO);
         });
         return new PageInfo<>(result.getNumber() + 1, result.getSize(), (int) result.getTotalElements(), resultList);

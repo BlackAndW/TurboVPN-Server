@@ -24,6 +24,8 @@ public interface ServerRESTService {
 
     void updateOnlineConn(String ipAddr, Integer onlineConn) throws ServiceException;
 
+    void updateClose(String ipAddr) throws ServiceException;
+
     SettingVO getSettingByApp(String pkgName) throws ServiceException;
 
     void updateSettingByApp(String pkgName, Query query) throws ServiceException;

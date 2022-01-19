@@ -151,12 +151,19 @@ public class ServerServiceImpl implements ServerService {
             // 根据app配置筛除节点
             List<Server> serverFilterBySetting = serverRESTService.filterBySetting(pkgNameReal, serverList.getContent());
             List<Server> serverListByOrder = serverRESTService.sortByOrder(pkgNameReal, serverFilterBySetting);
-            for (Server serverItem : serverListByOrder) {
-                server = serverItem;
-                if (server.getOnlineConn() < server.getMaxConn()) {
+            // 将未满载的节点添加到节点池，从中随机获取一个节点返回
+            List<Server> serverPool = new ArrayList<>();
+            for (Server serverNode: serverListByOrder) {
+                if (serverNode.getOnlineConn() < serverNode.getMaxConn()) {
+                    serverPool.add(serverNode);
+                }
+                // 节点池最多包含8个节点
+                if (serverPool.size() == 8) {
                     break;
                 }
             }
+            int randomNo = new Random().nextInt(serverPool.size());
+            server = serverPool.get(randomNo);
             // 手动连接模式，满载切换同国家其他备用节点
         } else if (serverList.getContent().size() > 0) {
             server = serverList.getContent().get(0);
