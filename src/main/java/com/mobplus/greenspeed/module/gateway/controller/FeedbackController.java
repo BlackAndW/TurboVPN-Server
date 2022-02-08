@@ -11,11 +11,14 @@ import com.mobplus.greenspeed.service.MemberService;
 import com.mobplus.greenspeed.util.Result;
 import com.yeecloud.meeto.common.exception.ServiceException;
 import com.yeecloud.meeto.common.result.ResultCode;
+import com.yeecloud.meeto.common.util.ParamUtils;
 import com.yeecloud.meeto.common.util.StringUtils;
 import io.github.yedaxia.apidocs.ApiDoc;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * 错误日志和反馈
@@ -34,6 +37,9 @@ public class FeedbackController {
 
     @Autowired
     private ErrorLogService errorLogService;
+
+    @Autowired
+    private HttpServletRequest request;
 
     @PostMapping("/c0001")
     public Result postFeedback(@RequestHeader(Constants.H_PACKGE_NAME) String pkgName,
@@ -65,7 +71,8 @@ public class FeedbackController {
     @PostMapping("/c0002")
     public Result postErrLog(@RequestBody ErrorLogForm form,
                              @RequestHeader(value = "Api-Version", defaultValue = "1.0") String version) throws ServiceException {
-        String result = errorLogService.insertErrorLog(form);
+        String ipAddress = request != null ? ParamUtils.getIpAddr(request) : "";
+        String result = errorLogService.insertErrorLog(form, ipAddress);
         return Result.isEncode(version, result);
     }
 

@@ -28,4 +28,18 @@ public class ErrorLog extends AuditorEntity {
 
     @Column(name = "n_err_message")
     private String errMsg;
+
+    @Column(name = "n_user_ip")
+    private Long userIp;
+    @Column(name = "n_country")
+    private String country;
+    @Column(name = "n_region")
+    private String region;
+    @Column(name = "n_city")
+    private String city;
+
+    @Column(name = "n_server_name")
+    private String serverName;
+    @Column(name = "n_os")
+    private String os;
 }
