@@ -79,8 +79,8 @@ public class ServerRESTController {
     @GetMapping("/setting")
     public SettingVO getServerAppSetting(@RequestParam String pkgName) throws ServiceException {
         return serverRESTService.getSettingByApp(pkgName);
-
     }
+    
     @PostMapping("/setting/update")
     public Result updateServerAppSetting(@RequestParam String pkgName, @RequestBody Map<String, Object> params) throws ServiceException {
         Query query = new Query(params);

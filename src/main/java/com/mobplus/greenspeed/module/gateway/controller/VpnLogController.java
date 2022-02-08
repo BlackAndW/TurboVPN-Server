@@ -73,6 +73,7 @@ public class VpnLogController {
         result.getContent().forEach( item -> {
             ErrorLogVO errorLogVO = new ErrorLogVO();
             NewBeanUtils.copyProperties(errorLogVO, item);
+            errorLogVO.setUserIp(IpUtils.ipLong2Str(item.getUserIp()));
             resultList.add(errorLogVO);
         });
         return new PageInfo<>(result.getNumber() + 1, result.getSize(), (int) result.getTotalElements(), resultList);
@@ -82,7 +83,7 @@ public class VpnLogController {
     public JSONObject getAccountExcel(@RequestParam Map<String, Object> params) throws ParseException {
         StringBuilder sb = new StringBuilder();
         Query query = new Query(Maps.newHashMap(params));
-        sb.append("mysql -uroot -p").append(password).append(" -e \"select ").
+        sb.append("mysql -umobplus -p").append(password).append(" -e \"select ").
                 append("n_user_ip as 用户ip（未转化）, ").
                 append("n_country as 所属国家, ").
                 append("n_region as 地区, ").
