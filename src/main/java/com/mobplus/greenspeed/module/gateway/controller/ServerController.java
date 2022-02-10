@@ -231,7 +231,7 @@ public class ServerController {
             return false;
         }
         //解析IP,测试用ip，生产环境需要注释掉
-        ipAddress = "103.137.150.238";
+//        ipAddress = "103.137.150.238";
         Ip2location ip2location = ip2locationRepository.findIpInfo(IpUtils.ipStr2long(ipAddress));
         if (StringUtils.contains(value, ip2location.getCountryCode())) {
             log.error(" IMEI:[{}] IpAddr:[{}] in Limit Country:[{}]!", "no imei", ipAddress, ip2location.getCountryCode());
