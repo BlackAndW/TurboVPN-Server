@@ -85,6 +85,8 @@
         <dependency>
             <groupId>com.yeecloud</groupId>
             <artifactId>yeecloud-commons</artifactId>
+            <scope>system</scope>
+            <systemPath>F:/.m2/repository/com/yeecloud/yeecloud-commons/2.0.8/yeecloud-commons-2.0.8.jar</systemPath>
             <version>${common.version}</version>
         </dependency>
         <dependency>
@@ -195,6 +197,12 @@
             <artifactId>japidocs</artifactId>
             <version>1.4.4</version>
         </dependency>
+
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>2.6</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -232,76 +240,124 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>2.4.1</version>
+                <configuration>
+                    <jvmArguments>-Dfile.encoding=UTF-8</jvmArguments>
+                    <!-- 修改代码时自动更新生效，无需重启 -->
+                    <fork>true</fork>
+                    <layout>ZIP</layout>
+                    <includes>
+                        <include>
+                            <groupId>com.yeecloud</groupId>
+                            <artifactId>yeecloud-commons</artifactId>
+                        </include>
+                        <include>
+                            <groupId>com.yeecloud.ims</groupId>
+                            <artifactId>yeecloud-ims-dal</artifactId>
+                        </include>
+                    </includes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.1.1</version>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                            <excludeGroupIds>com.yeecloud</excludeGroupIds>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
-    <profiles>
-        <profile>
-            <id>dev</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.springframework.boot</groupId>
-                        <artifactId>spring-boot-maven-plugin</artifactId>
-                        <configuration>
-                            <jvmArguments>-Dfile.encoding=UTF-8</jvmArguments>
-                            <!-- 修改代码时自动更新生效，无需重启 -->
-                            <fork>true</fork>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>prod</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.springframework.boot</groupId>
-                        <artifactId>spring-boot-maven-plugin</artifactId>
-                        <configuration>
-                            <jvmArguments>-Dfile.encoding=UTF-8</jvmArguments>
-                            <!-- 修改代码时自动更新生效，无需重启 -->
-                            <fork>true</fork>
-                            <layout>ZIP</layout>
-                            <includes>
-                                <include>
-                                    <groupId>com.yeecloud</groupId>
-                                    <artifactId>yeecloud-commons</artifactId>
-                                </include>
-                                <include>
-                                    <groupId>com.yeecloud.ims</groupId>
-                                    <artifactId>yeecloud-ims-dal</artifactId>
-                                </include>
-                            </includes>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>repackage</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-dependency-plugin</artifactId>
-                        <executions>
-                            <execution>
-                                <id>copy-dependencies</id>
-                                <phase>prepare-package</phase>
-                                <goals>
-                                    <goal>copy-dependencies</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${project.build.directory}/lib</outputDirectory>
-                                    <excludeGroupIds>com.yeecloud</excludeGroupIds>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
+    <!--<profiles>-->
+        <!--<profile>-->
+            <!--<id>dev</id>-->
+            <!--<build>-->
+                <!--<plugins>-->
+                    <!--<plugin>-->
+                        <!--<groupId>org.springframework.boot</groupId>-->
+                        <!--<artifactId>spring-boot-maven-plugin</artifactId>-->
+                        <!--<configuration>-->
+                            <!--<jvmArguments>-Dfile.encoding=UTF-8</jvmArguments>-->
+                            <!--&lt;!&ndash; 修改代码时自动更新生效，无需重启 &ndash;&gt;-->
+                            <!--<fork>true</fork>-->
+                        <!--</configuration>-->
+                    <!--</plugin>-->
+                <!--</plugins>-->
+            <!--</build>-->
+        <!--</profile>-->
+        <!--<profile>-->
+            <!--<id>prod</id>-->
+            <!--<build>-->
+                <!--<plugins>-->
+                    <!--<plugin>-->
+                        <!--<groupId>org.springframework.boot</groupId>-->
+                        <!--<artifactId>spring-boot-maven-plugin</artifactId>-->
+                        <!--<version>2.4.1</version>-->
+                        <!--<configuration>-->
+                            <!--<jvmArguments>-Dfile.encoding=UTF-8</jvmArguments>-->
+                            <!--&lt;!&ndash; 修改代码时自动更新生效，无需重启 &ndash;&gt;-->
+                            <!--<fork>true</fork>-->
+                            <!--<layout>ZIP</layout>-->
+                            <!--<includes>-->
+                                <!--<include>-->
+                                    <!--<groupId>com.yeecloud</groupId>-->
+                                    <!--<artifactId>yeecloud-commons</artifactId>-->
+                                <!--</include>-->
+                                <!--<include>-->
+                                    <!--<groupId>com.yeecloud.ims</groupId>-->
+                                    <!--<artifactId>yeecloud-ims-dal</artifactId>-->
+                                <!--</include>-->
+                            <!--</includes>-->
+                        <!--</configuration>-->
+                        <!--<executions>-->
+                            <!--<execution>-->
+                                <!--<goals>-->
+                                    <!--<goal>repackage</goal>-->
+                                <!--</goals>-->
+                            <!--</execution>-->
+                        <!--</executions>-->
+                    <!--</plugin>-->
+                    <!--<plugin>-->
+                        <!--<groupId>org.apache.maven.plugins</groupId>-->
+                        <!--<artifactId>maven-dependency-plugin</artifactId>-->
+                        <!--<version>2.10</version>-->
+                        <!--<executions>-->
+                            <!--<execution>-->
+                                <!--<id>copy-dependencies</id>-->
+                                <!--<phase>prepare-package</phase>-->
+                                <!--<goals>-->
+                                    <!--<goal>copy-dependencies</goal>-->
+                                <!--</goals>-->
+                                <!--<configuration>-->
+                                    <!--<outputDirectory>${project.build.directory}/lib</outputDirectory>-->
+                                    <!--<excludeGroupIds>com.yeecloud</excludeGroupIds>-->
+                                <!--</configuration>-->
+                            <!--</execution>-->
+                        <!--</executions>-->
+                    <!--</plugin>-->
+                <!--</plugins>-->
+            <!--</build>-->
+        <!--</profile>-->
+    <!--</profiles>-->
 </project>
