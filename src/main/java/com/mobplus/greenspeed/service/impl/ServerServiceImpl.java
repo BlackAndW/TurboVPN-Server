@@ -136,7 +136,7 @@ public class ServerServiceImpl implements ServerService {
         if (serverId != 0) {
             predicateServer = ExpressionUtils.and(predicateServer, qServer.id.eq(serverId));
         } else {
-            // 新版本若参数是0，按顺序连接
+            // 新版本若参数是0，为自动连接模式
             predicateServer = ExpressionUtils.and(predicateServer, qServer.type.in(Server.Type.NORMAL, Server.Type.POOL));
         }
 
