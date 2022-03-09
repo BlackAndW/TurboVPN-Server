@@ -85,8 +85,6 @@
         <dependency>
             <groupId>com.yeecloud</groupId>
             <artifactId>yeecloud-commons</artifactId>
-            <scope>system</scope>
-            <systemPath>F:/.m2/repository/com/yeecloud/yeecloud-commons/2.0.8/yeecloud-commons-2.0.8.jar</systemPath>
             <version>${common.version}</version>
         </dependency>
         <dependency>
