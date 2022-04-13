@@ -56,6 +56,8 @@ public class AccountLog implements Serializable {
     private String region;
     @Column(name = "n_city")
     private String city;
+    @Column(name = "n_is_subscribe")
+    private Integer isSubscribe;
 
     @CreatedDate
     @Column(name = "n_created_at", updatable = false)

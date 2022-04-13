@@ -70,6 +70,7 @@ public class ServerServiceImpl implements ServerService {
             Integer status = query.get("status", Integer.class);
             Integer type = query.get("type", Integer.class);
             Boolean clearCache = query.get("clearCache", Boolean.class);
+            String isSubscribe = query.get("isSubscribe", String.class);
 
             if (clearCache != null && clearCache) { clearCache(); }
 
@@ -93,7 +94,10 @@ public class ServerServiceImpl implements ServerService {
             if (null != status  && status != 0 && status > 0) {
                 predicate = ExpressionUtils.and(predicate, qServer.status.eq(status));
             }
-            if (type != Server.Type.ALL) {
+            if (type == Server.Type.ALL) {
+                predicate = ExpressionUtils.and(predicate, qServer.type.eq(Server.Type.NORMAL));
+                predicate = ExpressionUtils.or(predicate, qServer.type.eq(Server.Type.VIP));
+            } else {
                 predicate = ExpressionUtils.and(predicate, qServer.type.eq(type));
             }
             Sort sort = Sort.by(new Sort.Order(Sort.Direction.ASC, "ratio"), new Sort.Order(Sort.Direction.ASC, "name"));
@@ -126,11 +130,12 @@ public class ServerServiceImpl implements ServerService {
     }
 
     @Override
-    public ServerAccount findServerAccountByServerId(Integer serverId, Integer appId, Integer memberId, Integer deviceId, String ipAddress, String pkgNameReal) throws IOException, ServiceException {
-        return executeFindServerAccountByServerId(serverId, appId, deviceId, ipAddress, pkgNameReal);
+    public ServerAccount findServerAccountByServerId(Integer serverId, Integer appId, Integer memberId, Integer deviceId, String ipAddress, String pkgNameReal, String isSubscribe) throws IOException, ServiceException {
+        return executeFindServerAccountByServerId(serverId, appId, deviceId, ipAddress, pkgNameReal, isSubscribe);
     }
 
-    private synchronized ServerAccount executeFindServerAccountByServerId(Integer serverId, Integer appId, Integer deviceId, String ipAddress, String pkgNameReal) throws IOException, ServiceException {
+    private synchronized ServerAccount executeFindServerAccountByServerId(Integer serverId, Integer appId, Integer deviceId,
+                                                                          String ipAddress, String pkgNameReal, String isSubscribe) throws IOException, ServiceException {
         QServer qServer = QServer.server;
         Predicate predicateServer = ExpressionUtils.and(qServer.deleted.eq(Boolean.FALSE), qServer.status.eq(2));
         if (serverId != 0) {
@@ -194,7 +199,7 @@ public class ServerServiceImpl implements ServerService {
             int randomNum = new Random().nextInt(list.size());
             list.get(randomNum).setServer(server);
             ServerAccount account = list.get(randomNum);
-            saveAccountLog(account, appId, deviceId, ipAddress, pkgNameReal);
+            saveAccountLog(account, appId, deviceId, ipAddress, pkgNameReal, isSubscribe);
             return account;
         }
         return null;
@@ -241,6 +246,10 @@ public class ServerServiceImpl implements ServerService {
             long startTime = simpleDateFormat.parse(startTimeStr).getTime();
             long endTime = simpleDateFormat.parse(endTimeStr).getTime();
             predicate = ExpressionUtils.and(predicate, accountLog.createdAt.between(startTime, endTime));
+        }
+        Integer isSubscribe = query.get("isSubscribe", Integer.class);
+        if (isSubscribe != null) {
+            predicate = ExpressionUtils.and(predicate, accountLog.isSubscribe.eq(isSubscribe));
         }
         Sort sort = Sort.by(new Sort.Order(Sort.Direction.DESC, "createdAt"));
         PageRequest pagRequest = PageRequest.of(query.getPageNo() - 1, query.getPageSize(), sort);
@@ -302,9 +311,9 @@ public class ServerServiceImpl implements ServerService {
     }
 
     @Async
-    synchronized void saveAccountLog(ServerAccount account, Integer appId, Integer deviceId, String ipAddress, String pkgNameReal) {
+    synchronized void saveAccountLog(ServerAccount account, Integer appId, Integer deviceId, String ipAddress, String pkgNameReal, String isSubscribe) {
         AccountLog log = new AccountLog();
-//        ipAddress = "192.155.85.6";
+        ipAddress = "103.137.150.238";
         long ipLong = IpUtils.ipStr2long(ipAddress);
         if (ipLong != 0) {
             Ip2location ipInfo = getIpInfo(ipLong);
@@ -321,6 +330,8 @@ public class ServerServiceImpl implements ServerService {
             log.setDeviceId(deviceId);
             log.setUserIp(ipLong);
             log.setReleaseAt(0L);
+            Integer isSubScribeInt = Integer.valueOf(isSubscribe);
+            log.setIsSubscribe(isSubScribeInt);
             accountLogRepository.save(log);
         }
         // 统计各节点总连接数

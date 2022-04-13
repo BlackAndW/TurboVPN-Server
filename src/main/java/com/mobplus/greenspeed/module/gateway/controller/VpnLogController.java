@@ -45,7 +45,7 @@ public class VpnLogController {
     private ServerRESTService serverRESTService;
 
     @GetMapping("/list")
-    public PageInfo<AccountLogVO> getServerList(@RequestParam Map<String, Object> params) throws ServiceException, ParseException {
+    public PageInfo<AccountLogVO> queryAccountLog(@RequestParam Map<String, Object> params) throws ServiceException, ParseException {
         Query query = new Query(Maps.newHashMap(params));
         Page<AccountLog> list = serverService.queryLog(query);
         return convert(list);

@@ -27,5 +27,6 @@ public class Constants {
     public static final String H_IMEI = "H004";
     public static final String H_LOCALE = "H005";
     public static final String H_PACKGE_NAME_REAL = "H006";
+    public static final String H_IS_SUBSCRIBE= "H007";
     public static final String H_MOIBILE_OS = "mobileOS";
 }
