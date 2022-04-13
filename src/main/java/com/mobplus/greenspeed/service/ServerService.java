@@ -29,5 +29,5 @@ public interface ServerService {
 
     Server findById(Integer id) throws ServiceException;
 
-    ServerAccount findServerAccountByServerId(Integer serverId, Integer appId, Integer memberId, Integer devId, String ipAddress, String pkgNameReal) throws ServiceException, IOException;
+    ServerAccount findServerAccountByServerId(Integer serverId, Integer appId, Integer memberId, Integer devId, String ipAddress, String pkgNameReal, String isSubscribe) throws ServiceException, IOException;
 }

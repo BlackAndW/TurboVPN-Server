@@ -88,7 +88,7 @@ public class ScheduleTask {
         list.forEach(server -> {
             Result result = null;
             try {
-                result = serverController.getServerProfile("com.freetech.turbovpn", "", "android","","", "com.freetech.turbovpn", "1.1", server.getId());
+                result = serverController.getServerProfile("com.freetech.turbovpn", "", "android","","", "com.freetech.turbovpn", "0", "1.1", server.getId());
             } catch (ServiceException | IOException e) {
                 e.printStackTrace();
             }
@@ -99,7 +99,7 @@ public class ScheduleTask {
 
 //    @Scheduled(fixedDelay = 3 * 1000)
     public void getServerAutoCfg() throws IOException, ServiceException {
-        Result result = serverController.getServerProfile("com.freetech.turbovpn", "", "android","","", "com.freetech.turbovpn", "1.1", 0);
+        Result result = serverController.getServerProfile("com.freetech.turbovpn", "", "android","","", "com.freetech.turbovpn", "0", "1.1", 0);
         String dirName = BASE_DIR_NAME + "/app/api/v1/c03/c0001/0/";
         genConfigFile(dirName, result);
     }

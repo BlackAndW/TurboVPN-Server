@@ -95,11 +95,29 @@ public class ServerController {
 
     /**
      *
+     * 获取VIP节点列表
+     * @param pkgNameReal   【header参数-H006】 真实包名
+     * @param mobileOS  【header参数-mobileOS】手机系统 传android(默认)或ios
+     * @return
+     * @throws ServiceException
+     */
+    @PostMapping("/all")
+    public Result getAllServerList(@RequestHeader(value = Constants.H_PACKGE_NAME, defaultValue = "com.freetech.turbovpn") String pkgName,
+                                   @RequestHeader(value = Constants.H_LOCALE, defaultValue = "") String locale,
+                                   @RequestHeader(value = Constants.H_MOIBILE_OS, defaultValue = "android") String mobileOS,
+                                   @RequestHeader(value = Constants.H_PACKGE_NAME_REAL, defaultValue = "com.freetech.turbovpn") String pkgNameReal,
+                                   @RequestHeader(value = "Api-Version", defaultValue = "1.0") String apiVersion) throws ServiceException {
+        return getResultList(pkgName, locale, mobileOS, Server.Type.ALL, pkgNameReal, apiVersion);
+    }
+
+    /**
+     * 获取节点列表
      * @param type      节点类型
      * @return
      * @throws ServiceException
      */
-    private Result getResultList(String pkgName, String locale, String mobileOS, Integer type, String pkgNameReal, String apiVersion) throws ServiceException{
+    private Result getResultList(String pkgName, String locale, String mobileOS,Integer type,
+                                 String pkgNameReal, String apiVersion) throws ServiceException{
         String ipAddress = request != null && !locale.equals("local")? ParamUtils.getIpAddr(request) : "";
         boolean limit = isNeedRegionLimit(ipAddress);
         if (limit) {
@@ -133,13 +151,14 @@ public class ServerController {
      */
     @PostMapping("/c0001/{id}")
     public Result getServerProfile(@RequestHeader(value = Constants.H_PACKGE_NAME, defaultValue="com.freetech.turbovpn") String pkgName,
-                                                    @RequestHeader(value = Constants.H_LOCALE, defaultValue="") String locale,
-                                                    @RequestHeader(value = Constants.H_TOKEN, defaultValue="") String token,
-                                                    @RequestHeader(value = Constants.H_UUID, defaultValue="") String devId,
-                                                    @RequestHeader(value = Constants.H_IMEI, defaultValue="") String imei,
-                                                    @RequestHeader(value = Constants.H_PACKGE_NAME_REAL, defaultValue = "com.freetech.turbovpn") String pkgNameReal,
-                                                    @RequestHeader(value = "Api-Version", defaultValue = "1.0") String apiVersion,
-                                                    @PathVariable(value = "id", required = true) Integer serverId) throws ServiceException, IOException {
+                                   @RequestHeader(value = Constants.H_LOCALE, defaultValue="") String locale,
+                                   @RequestHeader(value = Constants.H_TOKEN, defaultValue="") String token,
+                                   @RequestHeader(value = Constants.H_UUID, defaultValue="") String devId,
+                                   @RequestHeader(value = Constants.H_IMEI, defaultValue="") String imei,
+                                   @RequestHeader(value = Constants.H_PACKGE_NAME_REAL, defaultValue = "com.freetech.turbovpn") String pkgNameReal,
+                                   @RequestHeader(value = Constants.H_IS_SUBSCRIBE, defaultValue = "0") String isSubscribe,
+                                   @RequestHeader(value = "Api-Version", defaultValue = "1.0") String apiVersion,
+                                   @PathVariable(value = "id", required = true) Integer serverId) throws ServiceException, IOException {
         String ipAddress = request != null && !locale.equals("local")? ParamUtils.getIpAddr(request) : "";
         boolean limit = isNeedRegionLimit(ipAddress);
         if (limit) {
@@ -159,7 +178,8 @@ public class ServerController {
                 member != null ? member.getId() : 0,
                 device != null ? device.getId() : 0,
                 ipAddress,
-                pkgNameReal
+                pkgNameReal,
+                isSubscribe
         );
         if (account != null) {
             ServerProfileVO profile = convert.convert(account);
