@@ -248,7 +248,7 @@ public class ServerServiceImpl implements ServerService {
             predicate = ExpressionUtils.and(predicate, accountLog.createdAt.between(startTime, endTime));
         }
         Integer isSubscribe = query.get("isSubscribe", Integer.class);
-        if (isSubscribe != null) {
+        if (isSubscribe != null && isSubscribe > 0) {
             predicate = ExpressionUtils.and(predicate, accountLog.isSubscribe.eq(isSubscribe));
         }
         Sort sort = Sort.by(new Sort.Order(Sort.Direction.DESC, "createdAt"));
